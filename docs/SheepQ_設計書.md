@@ -123,29 +123,96 @@
 
 ### 4.1 テーブル一覧
 
-- users
-- quizzes
-- scores
+### users
+
+ログインユーザー（一般/管理者もここで管理）
+
+- id(PK)
+- name
+- email
+- role（"user" / "admin"）
+- created_at, updated_at
+
+### quizzes（問題）
+
+問題本体（管理画面でCRUDする中心）
+
+- id(PK)
+- image_url
+- question（問題文）
+- explanation（解説）
+- is_published（公開/下書き）
+- created_at, updated_at
+
+### choices（選択肢）
+
+　4択想定。正解フラグはここ
+
+- id(PK)
+- quiz_id（FK: quizzes.id）
+- text（選択肢の文）
+- is_correct（正解ならtrue）
+- sort_order（表示順）
+- created_at, updated_at
+
+### quiz_attempts（1回のプレイ）
+
+「1回挑戦した」という箱（結果画面・ランキングの核）
+
+- id (PK)
+- user_id（FK: users.id）
+- total_questions
+- correct_count
+- started_at
+- finished_at
+- created_at
+
+### 5 answers（回答ログ）
+
+挑戦中に各問題へどう答えたか
+
+- id (PK)
+- attempt_id（FK: quiz_attempts.id）
+- quiz_id（FK: quizzes.id）
+- choice_id（FK choices.id）
+- is_correct（採点結果を保存しておくとラク）
+- answered_at
+
+---
+
+#### クイズ出題（quizzes + choices）
+
+#### 結果表示（quiz_attempts + answers）
+
+#### ランキング表示（quiz_attempts を user ごとに集計）
+
+---
 
 ### 4.2 テーブル定義（例）
 
-#### users
+#### 🐑 users（ユーザー）
 
-| カラム名        | 型     | 制約             | 説明               |
-| --------------- | ------ | ---------------- | ------------------ |
-| id              | bigint | PK               | ユーザーID         |
-| email           | string | unique, not null | メールアドレス     |
-| password_digest | string | not null         | パスワードハッシュ |
-| role            | string | not null         | user / admin       |
+| カラム名   | 型       | 制約         | 説明       |
+| ---------- | -------- | ------------ | ---------- |
+| id         | string   | PK           | ユーザーID |
+| name       | string   | nullable     | 表示名     |
+| email      | string   | unique       | メール     |
+| role       | enum     | default:user | user/admin |
+| created_at | datetime | default now  | 作成       |
+| updated_at | datetime | auto update  | 更新       |
 
-#### quizzes
+#### quizzes（問題）
 
-| カラム名     | 型      | 制約     | 説明               |
-| ------------ | ------- | -------- | ------------------ |
-| id           | bigint  | PK       | クイズID           |
-| question     | text    | not null | 問題文             |
-| choices      | json    | not null | 選択肢配列         |
-| answer_index | integer | not null | 正解のインデックス |
+| カラム名      | 型       | 制約                  | 説明              |
+| ------------- | -------- | --------------------- | ----------------- |
+| id            | string   | PK                    | クイズID          |
+| question      | text     | not null              | 問題文            |
+| image_url     | text     | nullable              | 画像URL（なしOK） |
+| explanation   | text     | nullable              | 解説              |
+| is_published  | boolean  | default false         | 公開/下書き       |
+| created_by_id | string   | FK users.id, nullable | 作成者            |
+| created_at    | datetime | default now           | 作成              |
+| updated_at    | datetime | auto update           | 更新              |
 
 #### scores
 
@@ -156,6 +223,41 @@
 | score         | integer  | not null | 点数       |
 | correct_count | integer  | not null | 正解数     |
 | created_at    | datetime |          | 作成日時   |
+
+#### choices（選択肢）
+
+| カラム名   | 型       | 制約                        | 説明       |
+| ---------- | -------- | --------------------------- | ---------- |
+| id         | string   | PK                          | 選択肢ID   |
+| quiz_id    | string   | FK quizzes.id               | クイズID   |
+| text       | text     | not null                    | 選択肢     |
+| is_correct | boolean  | default false               | 正解フラグ |
+| sort_order | int      | unique(quiz_id, sort_order) | 1〜4       |
+| created_at | datetime | default now                 | 作成       |
+| updated_at | datetime | auto update                 | 更新       |
+
+#### quiz_attempts（1回のプレイ）
+
+| カラム名        | 型       | 制約                  | 説明                 |
+| --------------- | -------- | --------------------- | -------------------- |
+| id              | string   | PK                    | 挑戦ID               |
+| user_id         | string   | FK users.id, nullable | ログインなしならnull |
+| total_questions | int      | not null              | 出題数               |
+| correct_count   | int      | not null              | 正解数               |
+| started_at      | datetime | default now           | 開始                 |
+| finished_at     | datetime | nullable              | 終了                 |
+| created_at      | datetime | default now           | 作成                 |
+
+#### answers（回答ログ）
+
+| カラム名    | 型       | 制約                | 説明                 |
+| ----------- | -------- | ------------------- | -------------------- |
+| id          | string   | PK                  | 回答ID               |
+| attempt_id  | string   | FK quiz_attempts.id | 挑戦ID               |
+| quiz_id     | string   | FK quizzes.id       | 問題ID               |
+| choice_id   | string   | FK choices.id       | 選んだ選択肢         |
+| is_correct  | boolean  | not null            | その時の正誤（固定） |
+| answered_at | datetime | default now         | 回答時刻             |
 
 ## 5. API設計
 
