@@ -1,5 +1,7 @@
 # ひつじの挑戦状🐑 – Sheep Q – 設計書
 
+<br>
+
 ## 1. PRD・要件定義
 
 ### 1.1 目的
@@ -44,12 +46,15 @@
   - スコアがDBに保存されランキングに反映される。
   - 管理者がクイズをCRUDできる。
 
+<br>
+
 ## 2. 技術選定
 
 ### 2.1 全体構成
 
-- モノレポ構成（フロントエンド・バックエンド分離）
-- コンテナ環境で起動可能
+- モノレポ構成とし、フロントエンドおよびバックエンドを論理的に分離する。
+- バックエンドおよびデータベースは Docker Compose 上で起動し、  
+  フロントエンドはローカル環境で起動する構成とする。
 
 ### 2.2 フロントエンド
 
@@ -61,28 +66,30 @@
 
 - 言語：Ruby
 - フレームワーク：Ruby on Rails（APIモード）
+- 主な役割：認証処理、ビジネスロジック、データベース操作
 - 認証方式：JWT
 
 ### 2.4 データベース
 
 - 使用DB：PostgreSQL
-- ORM：ActiveRecord　？
+- ORM：ActiveRecord（Rails 標準ORM）
 
 ### 2.5 開発環境構成（Docker Compose）
 
-本システムは Docker Compose により、web / api / db の3コンテナ構成とする。
+本システムの開発環境では、バックエンドおよびデータベースをDocker Compose 上で起動し、
+フロントエンドはローカル環境で起動する構成とする。
 
-- web コンテナ（Next.js）：ホストへ 3000 番ポートを公開する
 - api コンテナ（Rails API）：ホストへ 3001 番ポートを公開する
-- db コンテナ（RDBMS）：api コンテナから接続される
+- db コンテナ（PostgreSQL）：api コンテナから接続される
 
 > 備考：db のポートは開発都合でホストへ公開する場合があるが、基本方針としてはコンテナ間ネットワークで閉じる。
 
 ### 2.6 通信設計（ローカル開発）
 
-- フロントエンド（Next.js）は `http://localhost:3000` で起動する
-- バックエンドAPI（Rails）は `http://localhost:3001` で起動する
-- フロントエンドからAPIへは HTTP 通信により `http://localhost:3001` を参照する
+- フロントエンド（Next.js）はローカル環境にて `http://localhost:3000` で起動する
+- バックエンドAPI（Rails）は Docker コンテナ上で `http://localhost:3001` で起動する
+- フロントエンドからバックエンドAPIへは HTTP 通信により  
+  `http://localhost:3001` を参照する構成とする
 
 #### 2.6.1 CORS
 
@@ -96,6 +103,8 @@
   - web（Next.js）
   - api（Rails）
   - db（PostgreSQL）
+
+<br>
 
 ## 3. 画面設計
 
@@ -119,35 +128,96 @@
 - adminのみ管理画面リンクを表示
 - 未ログイン時はログイン画面へリダイレクト
 
+<br>
+
 ## 4. DB設計
 
 ### 4.1 テーブル一覧
 
-- users
-- quizzes
-- scores
+### users
 
-### 4.2 テーブル定義（例）
+ログインユーザー（一般/管理者もここで管理）
 
-#### users
+- id(PK)
+- name
+- email
+- role（"user" / "admin"）
+- created_at, updated_at
 
-| カラム名        | 型     | 制約             | 説明               |
-| --------------- | ------ | ---------------- | ------------------ |
-| id              | bigint | PK               | ユーザーID         |
-| email           | string | unique, not null | メールアドレス     |
-| password_digest | string | not null         | パスワードハッシュ |
-| role            | string | not null         | user / admin       |
+### quizzes（問題）
 
-#### quizzes
+問題本体（管理画面でCRUDする中心）
 
-| カラム名     | 型      | 制約     | 説明               |
-| ------------ | ------- | -------- | ------------------ |
-| id           | bigint  | PK       | クイズID           |
-| question     | text    | not null | 問題文             |
-| choices      | json    | not null | 選択肢配列         |
-| answer_index | integer | not null | 正解のインデックス |
+- id(PK)
+- image_url
+- question（問題文）
+- explanation（解説）
+- is_published（公開/下書き）
+- created_at, updated_at
 
-#### scores
+### choices（選択肢）
+
+4択想定。正解フラグはここ
+
+- id(PK)
+- quiz_id（FK: [quizzes.id](http://quizzes.id/)）
+- text（選択肢の文）
+- is_correct（正解ならtrue）
+- sort_order（表示順）
+- created_at, updated_at
+
+### quiz_attempts（1回のプレイ）
+
+「1回挑戦した」という箱（結果画面・ランキングの核）
+
+- id (PK)
+- user_id（FK: [users.id](http://users.id/)）
+- total_questions
+- correct_count
+- started_at
+- finished_at
+- created_at
+
+### 5 answers（回答ログ）
+
+挑戦中に各問題へどう答えたか
+
+- id (PK)
+- attempt_id（FK: quiz_attempts.id）
+- quiz_id（FK: [quizzes.id](http://quizzes.id/)）
+- choice_id（FK [choices.id](http://choices.id/)）
+- is_correct（採点結果を保存しておくとラク）
+- answered_at
+
+---
+
+## 4.2 テーブル定義
+
+### 🐑 users（ユーザー）
+
+| カラム名   | 型       | 制約         | 説明       |
+| ---------- | -------- | ------------ | ---------- |
+| id         | string   | PK           | ユーザーID |
+| name       | string   | nullable     | 表示名     |
+| email      | string   | unique       | メール     |
+| role       | enum     | default:user | user/admin |
+| created_at | datetime | default now  | 作成       |
+| updated_at | datetime | auto update  | 更新       |
+
+### quizzes（問題）
+
+| カラム名      | 型       | 制約                                      | 説明              |
+| ------------- | -------- | ----------------------------------------- | ----------------- |
+| id            | string   | PK                                        | クイズID          |
+| question      | text     | not null                                  | 問題文            |
+| image_url     | text     | nullable                                  | 画像URL（なしOK） |
+| explanation   | text     | nullable                                  | 解説              |
+| is_published  | boolean  | default false                             | 公開/下書き       |
+| created_by_id | string   | FK [users.id](http://users.id/), nullable | 作成者            |
+| created_at    | datetime | default now                               | 作成              |
+| updated_at    | datetime | auto update                               | 更新              |
+
+### scores
 
 | カラム名      | 型       | 制約     | 説明       |
 | ------------- | -------- | -------- | ---------- |
@@ -156,6 +226,45 @@
 | score         | integer  | not null | 点数       |
 | correct_count | integer  | not null | 正解数     |
 | created_at    | datetime |          | 作成日時   |
+
+### choices（選択肢）
+
+| カラム名   | 型       | 制約                                | 説明       |
+| ---------- | -------- | ----------------------------------- | ---------- |
+| id         | string   | PK                                  | 選択肢ID   |
+| quiz_id    | string   | FK [quizzes.id](http://quizzes.id/) | クイズID   |
+| text       | text     | not null                            | 選択肢     |
+| is_correct | boolean  | default false                       | 正解フラグ |
+| sort_order | int      | unique(quiz_id, sort_order)         | 1〜4       |
+| created_at | datetime | default now                         | 作成       |
+| updated_at | datetime | auto update                         | 更新       |
+
+### quiz_attempts（1回のプレイ）
+
+| カラム名        | 型       | 制約                                      | 説明                 |
+| --------------- | -------- | ----------------------------------------- | -------------------- |
+| id              | string   | PK                                        | 挑戦ID               |
+| user_id         | string   | FK [users.id](http://users.id/), nullable | ログインなしならnull |
+| total_questions | int      | not null                                  | 出題数               |
+| correct_count   | int      | not null                                  | 正解数               |
+| started_at      | datetime | default now                               | 開始                 |
+| finished_at     | datetime | nullable                                  | 終了                 |
+| created_at      | datetime | default now                               | 作成                 |
+
+### answers（回答ログ）
+
+| カラム名    | 型       | 制約                                | 説明                 |
+| ----------- | -------- | ----------------------------------- | -------------------- |
+| id          | string   | PK                                  | 回答ID               |
+| attempt_id  | string   | FK quiz_attempts.id                 | 挑戦ID               |
+| quiz_id     | string   | FK [quizzes.id](http://quizzes.id/) | 問題ID               |
+| choice_id   | string   | FK [choices.id](http://choices.id/) | 選んだ選択肢         |
+| is_correct  | boolean  | not null                            | その時の正誤（固定） |
+| answered_at | datetime | default now                         | 回答時刻             |
+
+→UNIQUE(attempt_id, quiz_id) ＝ 同じ問題に2回回答できない
+
+<br>
 
 ## 5. API設計
 
@@ -205,12 +314,11 @@
 
 1. ユーザー登録 → ログイン
 2. クイズ取得 → 回答 → 結果保存
-3. ランキング表示
-4. 管理者ログイン → クイズ作成 → 出題に反映
+3. 管理者ログイン → クイズ作成 → 出題に反映
 
 ### 6.3 E2E（可能なら）
 
-- Playwrightで「ログイン→クイズ→結果→ランキング」1本
+- Playwrightで「ログイン→クイズ→結果」1本
 
 ## 7. セキュリティ・非機能要件
 
@@ -219,28 +327,95 @@
 - 認証トークン管理：JWTをAuthorizationヘッダで送信
 - ログ方針：production環境ではdebugログを出さない
 
+<br>
+
 ## 8. 運用・起動方法
+
+本システムは、バックエンド（API・DB）を Docker Compose 上で起動し、  
+フロントエンド（Next.js）はローカル環境で起動する構成とする。
+
+<br>
 
 ### 8.0 ポート一覧
 
-| コンテナ | サービス   | コンテナ内ポート | ホスト公開ポート | 備考                    |
-| -------- | ---------- | ---------------- | ---------------- | ----------------------- |
-| web      | Next.js    | 3000             | 3000             | ブラウザからアクセス    |
-| api      | Rails API  | 3001             | 3001             | フロントからHTTP通信    |
-| db       | PostgreSQL | 5432             | （非公開）       | apiコンテナからのみ接続 |
+| サービス | 実行環境 | 内部ポート | ホスト公開ポート | 備考                         |
+| -------- | -------- | ---------- | ---------------- | ---------------------------- |
+| web      | ローカル | 3000       | 3000             | ブラウザから直接アクセス     |
+| api      | Docker   | 3000       | 3001             | フロントエンドから HTTP 通信 |
+| db       | Docker   | 5432       | 5432             | api コンテナから接続         |
 
-### 8.1 起動手順
+---
+
+### 8.1 起動手順（開発環境）
+
+#### ① API / DB コンテナの起動
+
+以下のコマンドを実行し、バックエンドおよびデータベースを起動する。
 
 ```bash
-docker-compose up
+docker compose build --no-cache
+docker compose up -d
 ```
 
-### 8.2 環境変数
+### ② データベース初期化（初回のみ）
+
+初回起動時は、以下のコマンドでデータベースを作成し、マイグレーションを実行する。
+
+```bash
+docker compose exec api bin/rails db:create
+docker compose exec api bin/rails db:migrate
+```
+
+<br>
+
+### ③ フロントエンドの起動
+
+別ターミナルでフロントエンドを起動する。
+
+```bash
+cd apps/web
+npm install
+npm run dev
+```
+
+<br>
+
+---
+
+### 8.2 アクセス先
+
+- フロントエンド（Next.js）
+  http://localhost:3000
+
+- バックエンド API（Rails）
+  http://localhost:3001
+
+---
+
+### 8.3 動作確認
+
+API の起動確認として、以下のエンドポイントにアクセスする。
+
+```bash
+curl http://localhost:3001/up
+```
+
+→HTTP 200 が返ることをもって、正常起動とする。
+
+### 8.4 停止方法
+
+```bash
+docker compose down
+```
+
+---
+
+### 環境変数
 
 - DATABASE_URL
 - JWT_SECRET
 
-### 8.3 初期管理者
+### 初期管理者
 
 - seedで admin ユーザーを1名作成
 
