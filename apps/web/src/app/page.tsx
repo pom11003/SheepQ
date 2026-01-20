@@ -1,25 +1,57 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
+
 export default function Home() {
+  const router = useRouter();
+
   return (
     <main className="container">
+      {/* 管理画面ボタン（右上） */}
+      <button
+        className="adminButton"
+        onClick={() => router.push('/login')}
+        title="管理者ログイン"
+      >
+        🐑
+      </button>
       <div className="card">
         <h1 className="title">🐏 ひつじの挑戦状</h1>
         <p className="subtitle">～ Sheep Q ～</p>
 
         <p className="description">ひつじに関するクイズに挑戦しよう！</p>
 
-        <button className="startButton">🐑 ゲームスタート</button>
+        <button className="startButton" onClick={() => router.push('/quiz')}>
+          🐑 ゲームスタート
+        </button>
       </div>
 
       <style jsx>{`
         .container {
+          position: relative;
           min-height: 100vh;
           display: flex;
           justify-content: center;
           align-items: center;
           background: linear-gradient(to bottom, #cceeff, #e6f7d9);
-          font-family: 'Rounded Mplus 1c', sans-serif;
+        }
+
+        .adminButton {
+          position: absolute;
+          top: 16px;
+          right: 16px;
+          background: #ffffffaa;
+          border: none;
+          border-radius: 999px;
+          padding: 6px 10px;
+          cursor: pointer;
+          font-size: 18px;
+          box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+          opacity: 0.7;
+        }
+
+        .adminButton:hover {
+          opacity: 1;
         }
 
         .card {
