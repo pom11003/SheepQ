@@ -259,6 +259,10 @@
 | is_correct  | boolean  | not null            | その時の正誤（固定） |
 | answered_at | datetime | default now         | 回答時刻             |
 
+#### →UNIQUE(attempt_id, quiz_id) ＝ 同じ問題に2回回答できない
+
+---
+
 ## 5. API設計
 
 ### 5.1 認証
