@@ -250,17 +250,18 @@
 | started_at      | datetime | default now                               | 開始                 |
 | finished_at     | datetime | nullable                                  | 終了                 |
 | created_at      | datetime | default now                               | 作成                 |
+| updated_at      | datetime | auto update                               | 更新                 |
 
 ### answers（回答ログ）
 
-| カラム名    | 型       | 制約                                | 説明                 |
-| ----------- | -------- | ----------------------------------- | -------------------- |
-| id          | string   | PK                                  | 回答ID               |
-| attempt_id  | string   | FK quiz_attempts.id                 | 挑戦ID               |
-| quiz_id     | string   | FK [quizzes.id](http://quizzes.id/) | 問題ID               |
-| choice_id   | string   | FK [choices.id](http://choices.id/) | 選んだ選択肢         |
-| is_correct  | boolean  | not null                            | その時の正誤（固定） |
-| answered_at | datetime | default now                         | 回答時刻             |
+| カラム名        | 型       | 制約                                | 説明                 |
+| --------------- | -------- | ----------------------------------- | -------------------- |
+| id              | string   | PK                                  | 回答ID               |
+| quiz_attempt_id | string   | FK quiz_attempts.id                 | 挑戦ID               |
+| quiz_id         | string   | FK [quizzes.id](http://quizzes.id/) | 問題ID               |
+| choice_id       | string   | FK [choices.id](http://choices.id/) | 選んだ選択肢         |
+| is_correct      | boolean  | not null                            | その時の正誤（固定） |
+| answered_at     | datetime | default now                         | 回答時刻             |
 
 →UNIQUE(attempt_id, quiz_id) ＝ 同じ問題に2回回答できない
 
