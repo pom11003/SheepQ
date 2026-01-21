@@ -7,4 +7,7 @@ Rails.application.routes.draw do
 
   # Defines the root path route ("/")
   # root "posts#index"
+
+  # 「GET /quizzes というお願いが来たら、QuizzesController の index に回すよ」
+  resources :quizzes, only: [:index]
 end
