@@ -12,3 +12,8 @@ Rails.application.routes.draw do
   # 「GET /quizzes というお願いが来たら、QuizzesController の index に回すよ」
   resources :quizzes, only: [:index]
 end
+Rails.application.routes.draw do
+  namespace :admin do
+    resources :quizzes, only: [:index, :create]
+  end
+end
