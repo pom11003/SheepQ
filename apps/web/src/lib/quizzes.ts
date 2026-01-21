@@ -232,6 +232,7 @@ export const quizzes: Quiz[] = [
     id: 101,
     question: "この動物はなに？",
     imageUrl: "/images/quizzes/sheep03.jpg",
+    imageCredit: "© Tomas Trajan / Unsplash",
     choices: ["山羊", "羊", "アルパカ", "犬"],
     correctIndex: 1,
     explanation: "羊と山羊は似ていますが、顔つきや角・毛の印象が違います。",
@@ -239,7 +240,8 @@ export const quizzes: Quiz[] = [
   {
     id: 102,
     question: "この動物はなに？",
-    imageUrl: "/images/quizzes/sheep08.jpg",
+    imageUrl: "/images/quizzes/sheep05.jpg",
+    imageCredit: "© Thomas Bormans / Unsplash",
     choices: ["羊", "山羊", "猫", "虎"],
     correctIndex: 0,
     explanation: "羊は温厚な性格の個体が多いと言われます。",
@@ -247,7 +249,8 @@ export const quizzes: Quiz[] = [
   {
     id: 103,
     question: "この動物はなに？",
-    imageUrl: "/images/quizzes/sheep10.jpg",
+    imageUrl: "/images/quizzes/sheep04.jpg",
+    imageCredit: "© Livin4wheel / Unsplash",
     choices: ["羊", "牛", "山羊", "馬"],
     correctIndex: 0,
     explanation: "羊は品種によって毛や顔つきがかなり違います。",

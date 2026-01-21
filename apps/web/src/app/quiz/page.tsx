@@ -82,6 +82,13 @@ export default function QuizPage() {
               sizes="(max-width: 640px) 100vw, 640px"
               className="object-cover object-center"
             />
+
+            {/* 右下にクレジットを重ねて表示 */}
+            {quiz.imageCredit && (
+              <div className="absolute bottom-1 right-2 rounded bg-black/50 px-1 text-[10px] text-white">
+                {quiz.imageCredit}
+              </div>
+            )}
           </div>
         </div>
       ) : null}
