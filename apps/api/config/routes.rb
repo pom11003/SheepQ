@@ -1,4 +1,7 @@
 Rails.application.routes.draw do
+  post "auth/signup", to: "auth#signup"
+  post "auth/login",  to: "auth#login"
+
   get "quizzes/index"
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
