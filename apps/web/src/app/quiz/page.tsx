@@ -59,114 +59,143 @@ export default function QuizPage() {
   };
 
   return (
-    <main className="mx-auto max-w-xl bg-base px-4 py-8">
+    <main className="min-h-screen bg-base py-5">
       {/* ヘッダー */}
-      <header className="mb-4 flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-accent1">Sheep Q</h1>
-
-        <div className="text-sm text-gray-500">
-          {index + 1} / {total}
-        </div>
+      <header className="mb-4 flex items-center justify-between px-4">
+        {" "}
+        <h1 className="text-2xl font-semibold text-accent1">Sheep Q</h1>{" "}
+        <div className="text-lg text-hint">
+          {" "}
+          Q {index + 1} / {total}{" "}
+        </div>{" "}
       </header>
 
-      {/* 画像（画像がある時だけ表示） */}
-      {quiz.imageUrl ? (
-        <div className="mb-4">
-          {/* 表示枠：サイズと比率を固定 */}
-          <div className="relative w-full overflow-hidden rounded-2xl bg-gray-50 shadow-sm aspect-[4/3]">
-            <Image
-              src={quiz.imageUrl}
-              alt="quiz"
-              fill
-              priority
-              sizes="(max-width: 640px) 100vw, 640px"
-              className="object-cover object-center"
-            />
+      {/* 中央寄せコンテンツ */}
+      <div className="mx-auto max-w-xl px-4">
+        {/* 画像（画像がある時だけ表示） */}
+        {quiz.imageUrl ? (
+          <div className="mb-4">
+            {/* 表示枠：サイズと比率を固定 */}
+            <div className="relative w-full overflow-hidden rounded-2xl bg-gray-50 shadow-sm aspect-[4/3]">
+              <Image
+                src={quiz.imageUrl}
+                alt="quiz"
+                fill
+                priority
+                sizes="(max-width: 640px) 100vw, 640px"
+                className="object-cover object-center"
+              />
 
-            {/* 右下にクレジットを重ねて表示 */}
-            {quiz.imageCredit && (
-              <div className="absolute bottom-1 right-2 rounded bg-black/50 px-1 text-[10px] text-white">
-                {quiz.imageCredit}
-              </div>
-            )}
-          </div>
-        </div>
-      ) : null}
-
-      {/* 問題 */}
-      <h2 className="mb-4 text-lg font-medium">Q. {quiz.question}</h2>
-
-      {/* 選択肢 */}
-      {/* label：ボタンに表示する文字、i：その選択肢の番号（0〜3） */}
-      <div className="grid grid-cols-2 gap-3">
-        {quiz.choices.map((label, i) => {
-          // 自分が選んだのは？
-          const isSelected = selected === i;
-          // 正解の選択肢は？
-          const isAnswer = quiz.correctIndex === i;
-
-          //----- 回答後の見た目 -----//
-          const base =
-            "rounded-xl border px-3 py-3 text-sm transition active:scale-[0.99]";
-          const enabled = "hover:bg-gray-50";
-          const disabled = "opacity-80";
-
-          let stateClass = "";
-
-          if (answered) {
-            if (isAnswer)
-              stateClass = "border-correct bg-correct/10"; // 正解は緑
-            else if (isSelected)
-              stateClass = "border-wrong bg-wrong/10"; // 間違えて選んだのは赤
-            else stateClass = "border-gray-200 bg-white"; // その他は普通
-          } else {
-            stateClass = "border-gray-200 bg-white";
-          }
-
-          return (
-            <button
-              key={i}
-              type="button"
-              onClick={() => onChoose(i)}
-              disabled={answered} // 回答後はクリックできないようにする
-              className={[base, stateClass, answered ? disabled : enabled].join(
-                " ",
+              {/* 右下にクレジットを重ねて表示 */}
+              {quiz.imageCredit && (
+                <div className="absolute bottom-1 right-2 rounded bg-black/50 px-1 text-[10px] text-white">
+                  {quiz.imageCredit}
+                </div>
               )}
-            >
-              {label}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* 回答後エリア（解説エリアは回答後だけ表示） */}
-      {answered ? (
-        <section className="mt-5 rounded-2xl border bg-white p-4">
-          <div className="text-sm font-semibold">
-            {isCorrect ? "✅ 正解！ +1 sheep 🐑" : "❌ 残念！"}
+            </div>
           </div>
-          <div className="mt-2 text-sm font-medium">
-            正解：{quiz.choices[quiz.correctIndex]}
-          </div>
-          <p className="mt-2 whitespace-pre-line text-sm text-gray-600">
-            {quiz.explanation}
-          </p>
+        ) : null}
 
-          <div className="mt-4 flex items-center justify-end">
-            <button
-              type="button"
-              onClick={onNext}
-              className="rounded-xl bg-accent1 px-4 py-2 font-bold text-sm text-white hover:opacity-90"
-            >
-              次へ
-            </button>
+        {/* 問題 */}
+        <h2 className="mb-4 text-lg font-medium">Q. {quiz.question}</h2>
+
+        {/* 回答エリア（選択肢カード） */}
+        <section className="mt-3 rounded-2xl p-4">
+          <div className="grid grid-cols-2 gap-3">
+            {quiz.choices.map((label, i) => {
+              const isSelected = selected === i;
+              const isAnswer = quiz.correctIndex === i;
+
+              const base =
+                "rounded-xl border px-3 py-3 text-sm transition active:scale-[0.99]";
+              const enabled = "hover:bg-gray-50";
+              const disabled = "opacity-80";
+
+              let stateClass = "";
+
+              if (answered) {
+                if (isAnswer)
+                  stateClass = "border-correct bg-correct/10"; // 正解は緑
+                else if (isSelected)
+                  stateClass = "border-wrong bg-wrong/10"; // 間違えて選んだのは赤
+                else stateClass = "border-gray-200 bg-white"; // その他は普通
+              } else {
+                stateClass = "border-gray-200 bg-white";
+              }
+
+              return (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => onChoose(i)}
+                  disabled={answered} // 回答後はクリックできないようにする
+                  className={[
+                    base,
+                    stateClass,
+                    answered ? disabled : enabled,
+                  ].join(" ")}
+                >
+                  {label}
+                </button>
+              );
+            })}
           </div>
         </section>
-      ) : null}
 
-      {/* 今のスコア */}
-      <div className="mt-6 text-center font-bold text-sm text-accent1">
-        スコア: {score} sheep 🐑
+        {/* 回答後エリア（解説エリアは回答後だけ表示） */}
+        {answered ? (
+          <section
+            className={[
+              "mt-5 rounded-2xl bg-white p-4 border transition-colors",
+              isCorrect
+                ? "border-correct/40 bg-white"
+                : "border-wrong/40 bg-white",
+            ].join(" ")}
+          >
+            <div className="text-sm font-semibold">
+              {isCorrect ? "✅ 正解！ +1 sheep 🐑" : "❌ 残念！"}
+            </div>
+            <div className="mt-2 text-sm font-medium">
+              正解：{quiz.choices[quiz.correctIndex]}
+            </div>
+            <p className="mt-2 whitespace-pre-line text-sm text-gray-600">
+              {quiz.explanation}
+            </p>
+
+            <div className="mt-4 flex items-center justify-end">
+              <button
+                type="button"
+                onClick={onNext}
+                className="rounded-xl bg-accent1 px-4 py-2 font-bold text-sm text-white hover:opacity-90"
+              >
+                次へ
+              </button>
+            </div>
+          </section>
+        ) : null}
+
+        {/* 今のスコア */}
+        {/* <div className="mt-6 text-center font-bold text-lg text-accent1">
+          Score: {score} sheep
+          <div>
+            {Array.from({ length: score }).map((_, i) => (
+              <span key={i}>🐏</span>
+            ))}
+          </div>
+        </div> */}
+      </div>
+      {/* 画面下固定のスコアバー */}
+      <div className="fixed bottom-4 left-1/2 z-10 -translate-x-1/2">
+        <div className="flex items-center gap-2 px-6 py-4 rounded-full bg-white/90 shadow text-lg font-bold text-accent1">
+          <span>Score:</span>
+          <span>{score}</span>
+          <span className="whitespace-nowrap">sheep</span>
+          <span className="whitespace-nowrap">
+            {Array.from({ length: score }).map((_, i) => (
+              <span key={i}>🐏</span>
+            ))}
+          </span>
+        </div>
       </div>
     </main>
   );
