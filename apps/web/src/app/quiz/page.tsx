@@ -70,15 +70,22 @@ export default function QuizPage() {
 
       {/* 画像（画像がある時だけ表示） */}
       {quiz.imageUrl ? (
-        <div className="mb-4 overflow-hidden rounded-2xl shadow-sm">
-          <Image
-            src={quiz.imageUrl}
-            alt="quiz"
-            width={1200}
-            height={800}
-            className="h-64 w-full object-cover"
-            priority
-          />
+        <div className="mb-4 flex justify-center">
+          <div className="h-48 w-full max-w-md overflow-hidden rounded-2xl bg-gray-50 shadow-sm">
+            <Image
+              src={quiz.imageUrl}
+              alt="quiz"
+              width={800}
+              height={600}
+              priority
+              style={{
+                width: "30%",
+                objectFit: "cover",
+                objectPosition: "center",
+                display: "block",
+              }}
+            />
+          </div>
         </div>
       ) : null}
 

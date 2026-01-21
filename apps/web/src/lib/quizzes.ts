@@ -419,17 +419,6 @@ export const quizzes: Quiz[] = [
     `,
   },
   {
-    id: 304,
-    question: "テクセルの羊毛が主にどの用途に向いているか？",
-    choices: ["高級ドレス用", "ニット用", "実用品や混紡用", "フェルト専用"],
-    correctIndex: 2,
-    explanation: `
-テクセルは肉用が中心で、羊毛は実用品や混紡向けです。
-最高級衣料用ではありません。
-    `,
-  },
-
-  {
     id: 305,
     question: "イースト・フリージアンの羊毛の評価として正しいのはどれ？",
     choices: [
@@ -447,7 +436,7 @@ export const quizzes: Quiz[] = [
 
   {
     id: 306,
-    question: "羊毛の「ミクロン値」が小さいほど、一般にどう評価される？",
+    question: "羊毛の「ミクロン値」が小さいほど、一般的にどう評価される？",
     choices: ["丈夫になる", "重くなる", "細かく高級になる", "色が濃くなる"],
     correctIndex: 2,
     explanation: `
