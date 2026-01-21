@@ -59,10 +59,11 @@ export default function QuizPage() {
   };
 
   return (
-    <main className="mx-auto max-w-xl px-4 py-8">
+    <main className="mx-auto max-w-xl bg-base px-4 py-8">
       {/* ヘッダー */}
       <header className="mb-4 flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Sheep Q</h1>
+        <h1 className="text-xl font-semibold text-accent1">Sheep Q</h1>
+
         <div className="text-sm text-gray-500">
           {index + 1} / {total}
         </div>
@@ -70,20 +71,16 @@ export default function QuizPage() {
 
       {/* 画像（画像がある時だけ表示） */}
       {quiz.imageUrl ? (
-        <div className="mb-4 flex justify-center">
-          <div className="h-48 w-full max-w-md overflow-hidden rounded-2xl bg-gray-50 shadow-sm">
+        <div className="mb-4">
+          {/* 表示枠：サイズと比率を固定 */}
+          <div className="relative w-full overflow-hidden rounded-2xl bg-gray-50 shadow-sm aspect-[4/3]">
             <Image
               src={quiz.imageUrl}
               alt="quiz"
-              width={800}
-              height={600}
+              fill
               priority
-              style={{
-                width: "30%",
-                objectFit: "cover",
-                objectPosition: "center",
-                display: "block",
-              }}
+              sizes="(max-width: 640px) 100vw, 640px"
+              className="object-cover object-center"
             />
           </div>
         </div>
@@ -111,9 +108,9 @@ export default function QuizPage() {
 
           if (answered) {
             if (isAnswer)
-              stateClass = "border-green-600 bg-green-50"; // 正解は緑
+              stateClass = "border-correct bg-correct/10"; // 正解は緑
             else if (isSelected)
-              stateClass = "border-red-600 bg-red-50"; // 間違えて選んだのは赤
+              stateClass = "border-wrong bg-wrong/10"; // 間違えて選んだのは赤
             else stateClass = "border-gray-200 bg-white"; // その他は普通
           } else {
             stateClass = "border-gray-200 bg-white";
@@ -152,16 +149,16 @@ export default function QuizPage() {
             <button
               type="button"
               onClick={onNext}
-              className="rounded-xl bg-black px-4 py-2 text-sm text-white hover:opacity-90"
+              className="rounded-xl bg-accent1 px-4 py-2 font-bold text-sm text-white hover:opacity-90"
             >
-              次へ →
+              次へ
             </button>
           </div>
         </section>
       ) : null}
 
       {/* 今のスコア */}
-      <div className="mt-6 text-center text-sm text-gray-500">
+      <div className="mt-6 text-center font-bold text-sm text-accent1">
         スコア: {score} sheep 🐑
       </div>
     </main>
