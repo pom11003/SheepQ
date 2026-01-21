@@ -167,7 +167,7 @@ export default function QuizPage() {
               <button
                 type="button"
                 onClick={onNext}
-                className="rounded-xl bg-accent1 px-4 py-2 font-bold text-sm text-white hover:opacity-90"
+                className="rounded-sm bg-accent1 px-6 py-2 font-medium text-sm text-white hover:opacity-90"
               >
                 次へ
               </button>
