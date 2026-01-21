@@ -11,8 +11,10 @@ docker compose up -d
 
 ### 2. データベース初期化（初回のみ）
 
+```bash
 docker compose exec api bin/rails db:create
 docker compose exec api bin/rails db:migrate
+```
 
 ### 3. フロントエンドをローカルで起動
 
