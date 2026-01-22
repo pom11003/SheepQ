@@ -1,9 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { quizzes } from "@/lib/quizzes";
+import { quizzes, type Quiz } from "@/lib/quizzes";
 import AppHeader from "@/components/AppHeader";
 
 //----- シャッフル関数 -----//
@@ -22,25 +22,34 @@ export default function QuizPage() {
   // ----- ランダム10問を最初に固定する -----//
   const PICK_COUNT = 10;
 
-  const [questions] = useState(() => {
-    const n = Math.min(PICK_COUNT, quizzes.length); // 問題数が10未満でも安全
-    return shuffle(quizzes).slice(0, n);
-  });
-
+  // SSRでは空。マウント後に確定させる
+  const [questions, setQuestions] = useState<Quiz[]>([]);
   // 今何問目？
   const [index, setIndex] = useState(0);
-
   // 回答状態
   const [selected, setSelected] = useState<number | null>(null); // ユーザーが選んだ選択肢の番号,まだ選んでない時は null
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null); // 正解だった？（true/false）
-
   // 合計スコア（正解数）
   const [score, setScore] = useState(0);
+
+  useEffect(() => {
+    const n = Math.min(PICK_COUNT, quizzes.length);
+    setQuestions(shuffle(quizzes).slice(0, n));
+  }, []);
+
+  if (questions.length === 0) {
+    return (
+      <main className="min-h-screen bg-base py-5">
+        <AppHeader showConfirm />
+        <div className="mx-auto max-w-xl px-4 pt-10 text-hint">Loading...</div>
+      </main>
+    );
+  }
 
   // total：問題数（表示に使う）
   // quiz：今表示する1問
   const total = questions.length;
-  const quiz = useMemo(() => questions[index], [questions, index]);
+  const quiz = questions[index];
 
   // 「回答済みか」を判定
   const answered = selected !== null;
@@ -48,7 +57,6 @@ export default function QuizPage() {
   // onChoose :ユーザーが1つの選択肢を押した瞬間に起こる一連の処理
   const onChoose = (choiceIndex: number) => {
     if (answered) return; // 連打防止
-
     setSelected(choiceIndex); // 「どれを選んだか」を記録
 
     // 正解か判定
