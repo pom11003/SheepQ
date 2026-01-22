@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { quizzes, type Quiz } from "@/lib/quizzes";
+// import { quizzes } from "@/lib/quizzes";
 import AppHeader from "@/components/AppHeader";
 
 //----- シャッフル関数 -----//
@@ -16,14 +16,75 @@ function shuffle<T>(array: T[]): T[] {
   return copy;
 }
 
+// APIから取ってくるための型と state を追加する
+type Quiz = {
+  id: number;
+  question: string;
+  choices: string[];
+  correctIndex: number;
+  explanation: string;
+  imageUrl?: string | null;
+  imageCredit?: string | null;
+};
+
 export default function QuizPage() {
   const router = useRouter();
 
   // ----- ランダム10問を最初に固定する -----//
   const PICK_COUNT = 10;
 
-  // SSRではだ問題は1問も決まっていない状態にして、マウント後に確定させる。
   const [questions, setQuestions] = useState<Quiz[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const res = await fetch(
+          `http://localhost:3001/api/quizzes/random?count=${PICK_COUNT}`,
+          { cache: "no-store" },
+        );
+
+        if (!res.ok) throw new Error(`fetch failed: ${res.status}`);
+
+        const data = await res.json();
+
+        // choices([{text, sort_order...}]) → choices(string[]) に変換
+        const normalized: Quiz[] = data.map((q: any) => {
+          const sorted = [...(q.choices ?? [])].sort(
+            (a: any, b: any) => a.sort_order - b.sort_order,
+          );
+
+          return {
+            id: q.id,
+            question: q.question,
+            choices: sorted.map((c: any) => c.text),
+            correctIndex: q.correct_index, // Quizに correct_index がある前提
+            explanation: q.explanation,
+            imageUrl: q.image_url,
+            imageCredit: q.image_credit,
+          };
+        });
+
+        setQuestions(shuffle(normalized).slice(0, PICK_COUNT));
+      } catch (e: any) {
+        setError(e?.message ?? "failed");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    load();
+  }, []);
+
+  // const [questions] = useState(() => {
+  //   const n = Math.min(PICK_COUNT, quizzes.length); // 問題数が10未満でも安全
+  //   return shuffle(quizzes).slice(0, n);
+  // });
+
   // 今何問目？
   const [index, setIndex] = useState(0);
   // 回答状態
@@ -31,28 +92,40 @@ export default function QuizPage() {
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null); // 正解だった？（true/false）
   // 合計スコア（正解数）
   const [score, setScore] = useState(0);
-  const scoreRef = useRef(0);
 
-  const sheepCount = Math.min(score, 10);
-  const extra = score - sheepCount;
+  if (loading) {
+    return (
+      <main className="min-h-screen bg-base py-5">
+        <AppHeader showConfirm />
+        <div className="mx-auto max-w-xl px-4">
+          <div className="rounded-2xl bg-white p-6 text-sm">読み込み中...</div>
+        </div>
+      </main>
+    );
+  }
 
-  //--- hydrationエラー対策（シャッフルが サーバーとブラウザで別の結果になることを防ぐ） ---//
+  if (error) {
+    return (
+      <main className="min-h-screen bg-base py-5">
+        <AppHeader showConfirm />
+        <div className="mx-auto max-w-xl px-4">
+          <div className="rounded-2xl bg-white p-6 text-sm">
+            読み込みに失敗しました: {error}
+          </div>
+        </div>
+      </main>
+    );
+  }
 
-  // ランダム10問を「クライアントだけで」決める。
-  useEffect(() => {
-    const n = Math.min(PICK_COUNT, quizzes.length);
-    setQuestions(shuffle(quizzes).slice(0, n));
-  }, []);
-  // ① quizzes 全体をシャッフル
-  // ② 先頭から n 問だけ切り出す
-  // ③ それを questions にセット
-
-  // 初回レンダー時：questions = [] → Loading表示
   if (questions.length === 0) {
     return (
       <main className="min-h-screen bg-base py-5">
         <AppHeader showConfirm />
-        <div className="mx-auto max-w-xl px-4 pt-10 text-hint">Loading...</div>
+        <div className="mx-auto max-w-xl px-4">
+          <div className="rounded-2xl bg-white p-6 text-sm">
+            問題がありません（公開中クイズが0件かも）
+          </div>
+        </div>
       </main>
     );
   }
