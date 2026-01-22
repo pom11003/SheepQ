@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_01_21_061523) do
+ActiveRecord::Schema[8.1].define(version: 2026_01_22_091113) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -50,8 +50,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_21_061523) do
   end
 
   create_table "quizzes", force: :cascade do |t|
+    t.integer "correct_index"
     t.datetime "created_at", null: false
     t.text "explanation"
+    t.string "image_credit"
     t.string "image_url"
     t.boolean "is_published", default: false, null: false
     t.text "question", null: false
