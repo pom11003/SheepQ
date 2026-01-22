@@ -1,5 +1,5 @@
-@config "../../tailwind.config.mjs";
-@import "tailwindcss";
+@config "../../tailwind.config.ts";
+@import 'tailwindcss';
 
 @keyframes fadeUp {
   from {
