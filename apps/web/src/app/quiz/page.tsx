@@ -87,9 +87,11 @@ export default function QuizPage() {
 
   // 今何問目？
   const [index, setIndex] = useState(0);
+
   // 回答状態
   const [selected, setSelected] = useState<number | null>(null); // ユーザーが選んだ選択肢の番号,まだ選んでない時は null
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null); // 正解だった？（true/false）
+
   // 合計スコア（正解数）
   const [score, setScore] = useState(0);
 
@@ -133,7 +135,7 @@ export default function QuizPage() {
   // total：問題数（表示に使う）
   // quiz：今表示する1問
   const total = questions.length;
-  const quiz = questions[index];
+  const quiz = useMemo(() => questions[index], [questions, index]);
 
   // 「回答済みか」を判定
   const answered = selected !== null;
@@ -141,6 +143,7 @@ export default function QuizPage() {
   // onChoose :ユーザーが1つの選択肢を押した瞬間に起こる一連の処理
   const onChoose = (choiceIndex: number) => {
     if (answered) return; // 連打防止
+
     setSelected(choiceIndex); // 「どれを選んだか」を記録
 
     // 正解か判定
@@ -148,30 +151,28 @@ export default function QuizPage() {
     setIsCorrect(correct);
 
     // 今の最新のスコア s を使って+1してね
-    if (correct) {
-      setScore((s) => {
-        const next = s + 1;
-        scoreRef.current = next; // ★最新スコアを確定保存
-        return next;
-      });
-    }
+    if (correct) setScore((s) => s + 1);
   };
 
   const onNext = () => {
+    // 次へ
     const nextIndex = index + 1;
 
-    // 次の問題へ行くときだけリセット
+    // 状態リセット
+    setSelected(null);
+    setIsCorrect(null);
+
+    // まだ問題が残ってたら setIndex(nextIndex) して次の問題へ
     if (nextIndex < total) {
-      setSelected(null);
-      setIsCorrect(null);
       setIndex(nextIndex);
       return;
     }
 
-    console.log("score(state)=", score, "score(ref)=", scoreRef.current);
+    // 最後なら結果へ（score と total をURLにつけて渡したい）
+    // 念のため「今画面に出ているスコア」を使う（最終表示の値）
+    const finalScore = score;
 
-    // 最後なら結果へ（refが常に最新）
-    router.push(`/result?score=${scoreRef.current}&total=${total}`);
+    router.push(`/result?score=${finalScore}&total=${total}`);
   };
 
   return (
@@ -295,10 +296,9 @@ export default function QuizPage() {
           <span>{score}</span>
           <span className="whitespace-nowrap">sheep</span>
           <span className="whitespace-nowrap">
-            {Array.from({ length: sheepCount }).map((_, i) => (
+            {Array.from({ length: score }).map((_, i) => (
               <span key={i}>🐏</span>
             ))}
-            {extra > 0 ? <span className="ml-1 text-sm">+{extra}</span> : null}
           </span>
         </div>
       </div>
