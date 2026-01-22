@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import AuthModal from "@/components/AuthModal";
+import { HeroCard } from "@/components/HeroCard";
 
 type Role = "user" | "admin";
 
@@ -138,52 +139,45 @@ export default function Home() {
   };
 
   return (
-    <main className="container">
-      {/* 右上：ログイン状態表示 */}
-      <div className="topRight">
+    <main className="min-h-screen bg-base py-5">
+      {/* 右上：ログイン状態表示（クイズのスコアバー風） */}
+      <div className="fixed right-4 top-4 z-20">
         {isLoggedIn ? (
-          <div className="meBox">
-            <span className="meText">
+          <div className="flex items-center gap-2 rounded-full bg-white/60 px-4 py-2 shadow backdrop-blur">
+            <span className="max-w-[220px] truncate text-xs text-hint">
               {me?.email}（{me?.role}）
             </span>
-            <button className="ghostBtn" onClick={logout}>
+            <button
+              onClick={logout}
+              type="button"
+              className="rounded-full px-3 py-1 text-sm font-medium hover:bg-black/5"
+            >
               ログアウト
             </button>
           </div>
         ) : (
-          <div className="meBox">
-            <button className="ghostBtn" onClick={openSignup}>
+          <div className="flex items-center gap-2 rounded-full bg-white/60 px-3 py-2 shadow backdrop-blur">
+            <button
+              onClick={openSignup}
+              type="button"
+              className="rounded-full px-3 py-1 text-sm font-medium hover:bg-black/5"
+            >
               新規登録
             </button>
-            <button className="ghostBtn" onClick={openLogin}>
+            <button
+              onClick={openLogin}
+              type="button"
+              className="rounded-full px-3 py-1 text-sm font-medium hover:bg-black/5"
+            >
               ログイン
             </button>
           </div>
         )}
       </div>
 
-      <div className="card">
-        <h1 className="title">🐏 ひつじの挑戦状</h1>
-        <p className="subtitle">～ Sheep Q ～</p>
-
-        <p className="description">ひつじに関するクイズに挑戦しよう！</p>
-
-        <div className="buttons">
-          <button className="startButton" onClick={goStart}>
-            🐑 ゲームスタート
-          </button>
-
-          {/* admin導線（同じログインフォームでOK） */}
-          <button
-            className="adminButton"
-            onClick={() => {
-              openLogin();
-            }}
-            title="管理者もここからログイン"
-          >
-            🐑 ログインはこちら
-          </button>
-        </div>
+      {/* 中央カード */}
+      <div className="mx-auto mt-8 max-w-xl px-4">
+        <HeroCard onStart={goStart} onOpenLogin={openLogin} />
       </div>
 
       {/* ログイン / 新規登録モーダル */}
@@ -201,229 +195,6 @@ export default function Home() {
         onSubmit={submit}
         onClose={() => setShowAuth(false)}
       />
-
-      <style jsx>{`
-        .container {
-          position: relative;
-          min-height: 100vh;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          background: linear-gradient(to bottom, #cceeff, #e6f7d9);
-          padding: 24px;
-        }
-
-        .topRight {
-          position: absolute;
-          top: 16px;
-          right: 16px;
-        }
-
-        .meBox {
-          display: flex;
-          gap: 10px;
-          align-items: center;
-          background: #ffffffaa;
-          padding: 8px 10px;
-          border-radius: 999px;
-          box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-          backdrop-filter: blur(6px);
-        }
-
-        .meText {
-          font-size: 12px;
-          color: #444;
-          max-width: 220px;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-        }
-
-        .ghostBtn {
-          border: none;
-          background: transparent;
-          cursor: pointer;
-          font-size: 13px;
-          padding: 6px 10px;
-          border-radius: 999px;
-          opacity: 0.9;
-        }
-        .ghostBtn:hover {
-          background: rgba(0, 0, 0, 0.06);
-        }
-
-        .card {
-          background: white;
-          padding: 48px;
-          border-radius: 24px;
-          text-align: center;
-          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-          max-width: 420px;
-          width: 100%;
-        }
-
-        .title {
-          font-size: 32px;
-          margin-bottom: 8px;
-        }
-
-        .subtitle {
-          font-size: 18px;
-          color: #666;
-          margin-bottom: 24px;
-        }
-
-        .description {
-          margin-bottom: 28px;
-          color: #555;
-        }
-
-        .buttons {
-          display: grid;
-          gap: 12px;
-          justify-items: center;
-        }
-
-        .startButton {
-          font-size: 18px;
-          padding: 12px 28px;
-          border-radius: 999px;
-          border: none;
-          background-color: #ffcc66;
-          cursor: pointer;
-          box-shadow: 0 4px 0 #e6b84d;
-          width: 100%;
-          max-width: 260px;
-        }
-
-        .startButton:hover {
-          transform: translateY(2px);
-          box-shadow: 0 2px 0 #e6b84d;
-        }
-
-        .adminButton {
-          border: none;
-          background: #f2f2f2;
-          cursor: pointer;
-          padding: 10px 16px;
-          border-radius: 999px;
-          opacity: 0.9;
-        }
-        .adminButton:hover {
-          opacity: 1;
-        }
-
-        .modalOverlay {
-          position: fixed;
-          inset: 0;
-          background: rgba(0, 0, 0, 0.35);
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          padding: 24px;
-          z-index: 50;
-        }
-
-        .modal {
-          width: 100%;
-          max-width: 420px;
-          background: white;
-          border-radius: 20px;
-          box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
-          overflow: hidden;
-        }
-
-        .modalHeader {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 12px 12px 0 12px;
-        }
-
-        .tabs {
-          display: flex;
-          gap: 8px;
-        }
-        .tab {
-          border: none;
-          background: #f2f2f2;
-          cursor: pointer;
-          padding: 8px 12px;
-          border-radius: 999px;
-          font-size: 13px;
-        }
-        .tab.active {
-          background: #ffcc66;
-        }
-
-        .closeBtn {
-          border: none;
-          background: transparent;
-          cursor: pointer;
-          font-size: 18px;
-          padding: 6px 10px;
-          border-radius: 10px;
-        }
-        .closeBtn:hover {
-          background: rgba(0, 0, 0, 0.06);
-        }
-
-        .form {
-          padding: 18px 18px 20px 18px;
-          display: grid;
-          gap: 12px;
-        }
-
-        .label {
-          display: grid;
-          gap: 6px;
-          font-size: 12px;
-          color: #444;
-          text-align: left;
-        }
-
-        .input {
-          border: 1px solid #ddd;
-          border-radius: 12px;
-          padding: 10px 12px;
-          font-size: 14px;
-          outline: none;
-        }
-        .input:focus {
-          border-color: #ffcc66;
-          box-shadow: 0 0 0 3px rgba(255, 204, 102, 0.35);
-        }
-
-        .error {
-          margin: 0;
-          white-space: pre-line;
-          color: #c0392b;
-          background: rgba(192, 57, 43, 0.08);
-          padding: 10px 12px;
-          border-radius: 12px;
-          font-size: 13px;
-        }
-
-        .primaryBtn {
-          border: none;
-          border-radius: 14px;
-          padding: 12px 14px;
-          cursor: pointer;
-          background: #ffcc66;
-          box-shadow: 0 4px 0 #e6b84d;
-          font-weight: 700;
-        }
-        .primaryBtn:disabled {
-          opacity: 0.6;
-          cursor: not-allowed;
-        }
-
-        .hint {
-          margin: 0;
-          color: #666;
-          font-size: 12px;
-        }
-      `}</style>
     </main>
   );
 }
