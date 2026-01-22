@@ -9,4 +9,20 @@ class QuizzesController < ApplicationController
       # JSONで「問題文＋4択」までまとめて返す。ただしchoices は id, text, sort_order だけを含める。
     render json: quizzes.as_json(include: { choices: { only: [:id, :text, :sort_order] } }) 
   end
+
+# ★さいとみ追加：ランダム10問を返す
+  def random
+    count = params[:count].to_i
+    count = 10 if count <= 0
+
+    quizzes = Quiz
+      .where(is_published: true)
+      .includes(:choices)
+      .to_a
+      .sample(count)
+
+    render json: quizzes.as_json(
+      include: { choices: { only: [:id, :text, :sort_order] } }
+    )
+  end
 end
