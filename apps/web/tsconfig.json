@@ -11,7 +11,8 @@
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "jsx": "react-jsx",
+    "types": ["vitest/globals"],
+    "jsx": "preserve",
     "incremental": true,
     "plugins": [
       {
