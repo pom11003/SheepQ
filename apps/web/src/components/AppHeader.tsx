@@ -8,7 +8,7 @@ type AppHeaderProps = {
 
 export default function AppHeader({ showConfirm = false }: AppHeaderProps) {
   return (
-    <header className="mb-4 flex items-center px-4">
+    <header className="my-10 flex items-center px-4">
       <h1 className="text-2xl font-semibold text-accent1">
         <Link
           href="/"

@@ -180,7 +180,7 @@ export default function QuizPage() {
   }
 
   return (
-    <main className="min-h-screen bg-base py-5">
+    <main className="min-h-screen bg-base">
       <AppHeader showConfirm />
 
       {/* クイズ画面用のサブ情報（残り問題数） */}
