@@ -1,7 +1,8 @@
-"use client";
+'use client';
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
-import AppHeader from "@/components/AppHeader";
+import { useEffect, useMemo, useState } from 'react';
+import AppHeader from '@/components/AppHeader';
+import type React from 'react';
 
 type Choice = {
   id: number;
@@ -30,23 +31,23 @@ type ChoiceDraft = {
   sort_order: number;
 };
 
-const API_BASE = "http://localhost:3001";
+const API_BASE = 'http://localhost:3001';
 
 export default function AdminQuizzesPage() {
-  const [tab, setTab] = useState<"list" | "create">("list");
+  const [tab, setTab] = useState<'list' | 'create'>('list');
 
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string>("");
+  const [error, setError] = useState<string>('');
 
   // form state
-  const [question, setQuestion] = useState("");
-  const [explanation, setExplanation] = useState("");
+  const [question, setQuestion] = useState('');
+  const [explanation, setExplanation] = useState('');
   const [choices, setChoices] = useState<ChoiceDraft[]>([
-    { sort_order: 1, text: "", is_correct: true },
-    { sort_order: 2, text: "", is_correct: false },
-    { sort_order: 3, text: "", is_correct: false },
-    { sort_order: 4, text: "", is_correct: false },
+    { sort_order: 1, text: '', is_correct: true },
+    { sort_order: 2, text: '', is_correct: false },
+    { sort_order: 3, text: '', is_correct: false },
+    { sort_order: 4, text: '', is_correct: false },
   ]);
 
   const correctCount = useMemo(
@@ -56,24 +57,24 @@ export default function AdminQuizzesPage() {
 
   const load = async () => {
     try {
-      setError("");
+      setError('');
       const res = await fetch(`${API_BASE}/admin/quizzes`, {
-        cache: "no-store",
+        cache: 'no-store',
       });
       if (!res.ok) throw new Error(`GET failed: ${res.status}`);
       const data = (await res.json()) as Quiz[];
       setQuizzes(data);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "unknown error");
+      setError(e instanceof Error ? e.message : 'unknown error');
     }
   };
 
   const togglePublish = async (id: number, next: boolean) => {
-    setError("");
+    setError('');
     try {
       const res = await fetch(`${API_BASE}/admin/quizzes/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ is_published: next }),
       });
 
@@ -85,7 +86,7 @@ export default function AdminQuizzesPage() {
       const updated = (await res.json()) as Quiz;
       setQuizzes((prev) => prev.map((q) => (q.id === id ? updated : q)));
     } catch (e) {
-      setError(e instanceof Error ? e.message : "unknown error");
+      setError(e instanceof Error ? e.message : 'unknown error');
     }
   };
 
@@ -103,25 +104,25 @@ export default function AdminQuizzesPage() {
   };
 
   const validate = (): string | null => {
-    if (!question.trim()) return "問題文（question）は必須です。";
+    if (!question.trim()) return '問題文（question）は必須です。';
     const empty = choices.find((c) => !c.text.trim());
-    if (empty) return "選択肢はすべて入力してください。";
-    if (correctCount < 1) return "正解の選択肢が1つ以上必要です。";
+    if (empty) return '選択肢はすべて入力してください。';
+    if (correctCount < 1) return '正解の選択肢が1つ以上必要です。';
     return null;
   };
 
   const resetForm = () => {
-    setQuestion("");
-    setExplanation("");
+    setQuestion('');
+    setExplanation('');
     setChoices([
-      { sort_order: 1, text: "", is_correct: true },
-      { sort_order: 2, text: "", is_correct: false },
-      { sort_order: 3, text: "", is_correct: false },
-      { sort_order: 4, text: "", is_correct: false },
+      { sort_order: 1, text: '', is_correct: true },
+      { sort_order: 2, text: '', is_correct: false },
+      { sort_order: 3, text: '', is_correct: false },
+      { sort_order: 4, text: '', is_correct: false },
     ]);
   };
 
-  const onSubmit = async (e: FormEvent) => {
+  const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     const msg = validate();
@@ -131,7 +132,7 @@ export default function AdminQuizzesPage() {
     }
 
     setLoading(true);
-    setError("");
+    setError('');
 
     try {
       const payloadObj = {
@@ -145,8 +146,8 @@ export default function AdminQuizzesPage() {
       };
 
       const res = await fetch(`${API_BASE}/admin/quizzes`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payloadObj),
       });
 
@@ -160,9 +161,9 @@ export default function AdminQuizzesPage() {
       resetForm();
 
       // ✅ 追加後は一覧へ戻す（運用がラク）
-      setTab("list");
+      setTab('list');
     } catch (e) {
-      setError(e instanceof Error ? e.message : "unknown error");
+      setError(e instanceof Error ? e.message : 'unknown error');
     } finally {
       setLoading(false);
     }
@@ -177,8 +178,8 @@ export default function AdminQuizzesPage() {
           className="absolute inset-0 opacity-[0.28]"
           style={{
             backgroundImage:
-              "radial-gradient(rgba(191,134,65,0.20) 1px, transparent 1px)",
-            backgroundSize: "18px 18px",
+              'radial-gradient(rgba(191,134,65,0.20) 1px, transparent 1px)',
+            backgroundSize: '18px 18px',
           }}
         />
         <div className="absolute -top-24 -left-24 h-72 w-72 rounded-full bg-accent1/10 blur-2xl" />
@@ -201,10 +202,10 @@ export default function AdminQuizzesPage() {
 
             <div className="self-start sm:self-auto">
               <div className="rounded-full bg-white/90 px-4 py-2 shadow-sm text-sm text-hint border border-gray-100">
-                合計{" "}
+                合計{' '}
                 <span className="font-semibold text-accent1">
                   {quizzes.length}
-                </span>{" "}
+                </span>{' '}
                 問
               </div>
             </div>
@@ -218,34 +219,34 @@ export default function AdminQuizzesPage() {
           <div className="inline-flex overflow-hidden rounded-t-3xl bg-white ">
             <button
               type="button"
-              onClick={() => setTab("list")}
+              onClick={() => setTab('list')}
               className={[
-                "px-5 py-3 text-sm font-semibold transition",
-                "border-r border-gray-100",
-                tab === "list"
-                  ? "bg-card text-accent1"
-                  : "bg-white text-hint hover:bg-gray-50",
-              ].join(" ")}
-              aria-current={tab === "list" ? "page" : undefined}
+                'px-5 py-3 text-sm font-semibold transition',
+                'border-r border-gray-100',
+                tab === 'list'
+                  ? 'bg-card text-accent1'
+                  : 'bg-white text-hint hover:bg-gray-50',
+              ].join(' ')}
+              aria-current={tab === 'list' ? 'page' : undefined}
             >
               クイズ一覧
             </button>
             <button
               type="button"
-              onClick={() => setTab("create")}
+              onClick={() => setTab('create')}
               className={[
-                "px-5 py-3 text-sm font-semibold transition",
-                tab === "create"
-                  ? "bg-card text-accent1"
-                  : "bg-white text-hint hover:bg-gray-50",
-              ].join(" ")}
-              aria-current={tab === "create" ? "page" : undefined}
+                'px-5 py-3 text-sm font-semibold transition',
+                tab === 'create'
+                  ? 'bg-card text-accent1'
+                  : 'bg-white text-hint hover:bg-gray-50',
+              ].join(' ')}
+              aria-current={tab === 'create' ? 'page' : undefined}
             >
               クイズ作成
             </button>
           </div>
 
-          {tab === "create" ? (
+          {tab === 'create' ? (
             //-----  クイズ追加フォーム -----//
             <section className="rounded-b-3xl bg-card p-5 shadow-sm border border-gray-100 border-t-0">
               <div className="flex items-center justify-between">
@@ -329,7 +330,7 @@ export default function AdminQuizzesPage() {
                     type="button"
                     onClick={() => {
                       resetForm();
-                      setTab("list");
+                      setTab('list');
                     }}
                     className="rounded-2xl border border-gray-200 shadow-sm bg-white px-4 py-3 text-sm font-semibold hover:bg-gray-50"
                   >
@@ -341,7 +342,7 @@ export default function AdminQuizzesPage() {
                     disabled={loading}
                     className="rounded-2xl bg-accent1 shadow-sm px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    {loading ? "作成中..." : "追加する"}
+                    {loading ? '作成中...' : '追加する'}
                   </button>
                 </div>
               </form>
@@ -382,13 +383,13 @@ export default function AdminQuizzesPage() {
 
                             <span
                               className={[
-                                "ml-1 rounded-full px-2 py-1 text-[11px] font-semibold border",
+                                'ml-1 rounded-full px-2 py-1 text-[11px] font-semibold border',
                                 q.is_published
-                                  ? "bg-correct/10 text-correct border-correct/20"
-                                  : "bg-gray-100 text-gray-600 border-gray-200",
-                              ].join(" ")}
+                                  ? 'bg-correct/10 text-correct border-correct/20'
+                                  : 'bg-gray-100 text-gray-600 border-gray-200',
+                              ].join(' ')}
                             >
-                              {q.is_published ? "公開" : "非公開"}
+                              {q.is_published ? '公開' : '非公開'}
                             </span>
                           </div>
 
@@ -411,11 +412,11 @@ export default function AdminQuizzesPage() {
                               <div
                                 key={c.id}
                                 className={[
-                                  "rounded-2xl border px-3 py-2 text-sm",
+                                  'rounded-2xl border px-3 py-2 text-sm',
                                   c.is_correct
-                                    ? "border-correct bg-correct/10"
-                                    : "border-gray-200 bg-white",
-                                ].join(" ")}
+                                    ? 'border-correct bg-correct/10'
+                                    : 'border-gray-200 bg-white',
+                                ].join(' ')}
                               >
                                 {c.sort_order}. {c.text}
                               </div>
@@ -429,7 +430,7 @@ export default function AdminQuizzesPage() {
                             onClick={() => togglePublish(q.id, !q.is_published)}
                             className="rounded-2xl border border-gray-200 bg-white px-3 py-2 text-sm hover:bg-gray-50"
                           >
-                            {q.is_published ? "非公開にする" : "公開にする"}
+                            {q.is_published ? '非公開にする' : '公開にする'}
                           </button>
                         </div>
                       </div>
