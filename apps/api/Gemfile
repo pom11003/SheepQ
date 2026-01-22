@@ -52,4 +52,7 @@ group :development, :test do
   # JWT 発行の実装する
   gem "jwt"
 
+  # RailsでCORSを許可する
+  gem "rack-cors"
+
 end
