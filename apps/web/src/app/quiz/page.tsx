@@ -4,9 +4,28 @@ import { useMemo, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { quizzes } from "@/lib/quizzes";
+import Link from "next/link";
+
+//----- シャッフル関数 -----//
+function shuffle<T>(array: T[]): T[] {
+  const copy = [...array];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
 
 export default function QuizPage() {
   const router = useRouter();
+
+  // ----- ランダム10問を最初に固定する -----//
+  const PICK_COUNT = 10;
+
+  const [questions] = useState(() => {
+    const n = Math.min(PICK_COUNT, quizzes.length); // 問題数が10未満でも安全
+    return shuffle(quizzes).slice(0, n);
+  });
 
   // 今何問目？
   const [index, setIndex] = useState(0);
@@ -20,8 +39,8 @@ export default function QuizPage() {
 
   // total：問題数（表示に使う）
   // quiz：今表示する1問
-  const total = quizzes.length;
-  const quiz = useMemo(() => quizzes[index], [index]); // useMemo は、「index が変わったときだけ、新しい quiz を取り直す」
+  const total = questions.length;
+  const quiz = useMemo(() => questions[index], [questions, index]);
 
   // 「回答済みか」を判定
   const answered = selected !== null;
@@ -63,7 +82,20 @@ export default function QuizPage() {
       {/* ヘッダー */}
       <header className="mb-4 flex items-center justify-between px-4">
         {" "}
-        <h1 className="text-2xl font-semibold text-accent1">Sheep Q</h1>{" "}
+        {/* Homeへのリンク（確認付き） */}
+        <h1 className="text-2xl font-semibold text-accent1">
+          <Link
+            href="/"
+            onClick={(e) => {
+              if (!confirm("クイズを終了してHomeに戻りますか？")) {
+                e.preventDefault();
+              }
+            }}
+            className="hover:opacity-80 transition-opacity"
+          >
+            Sheep Q
+          </Link>
+        </h1>{" "}
         <div className="text-lg text-hint">
           {" "}
           Q {index + 1} / {total}{" "}
@@ -177,7 +209,7 @@ export default function QuizPage() {
       </div>
       {/* 画面下固定のスコアバー */}
       <div className="fixed bottom-4 left-1/2 z-10 -translate-x-1/2">
-        <div className="flex items-center gap-2 px-6 py-4 rounded-full bg-white/90 shadow text-lg font-bold text-accent1">
+        <div className="flex items-center gap-2 px-6 py-4 rounded-full bg-white/50 shadow text-lg font-bold text-accent1">
           <span>Score:</span>
           <span>{score}</span>
           <span className="whitespace-nowrap">sheep</span>
