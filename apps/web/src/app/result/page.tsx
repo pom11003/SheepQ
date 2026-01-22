@@ -41,7 +41,7 @@ export default async function ResultPage({ searchParams }: PageProps) {
         </header>
 
         <section className="mt-8 rounded-2xl bg-white p-6 text-center shadow-sm">
-          {/* 評価メッセージ（ここが主役） */}
+          {/* 評価メッセージ */}
           <p className="p-10 text-xl font-bold">{message}</p>
 
           <p className="text-lg font-semibold">

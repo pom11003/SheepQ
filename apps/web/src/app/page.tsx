@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import AuthModal from "@/components/AuthModal";
 import { HeroCard } from "@/components/HeroCard";
+import AuthEntry from "@/components/AuthEntry";
+import AppHeader from "@/components/AppHeader";
 
 type Role = "user" | "admin";
 
@@ -139,7 +141,9 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-screen bg-base py-5">
+    <main className="py-5 min-h-screen bg-base flex flex-col relative">
+      {/* 共通ヘッダー */}
+      <AppHeader />
       {/* 右上：ログイン状態表示（クイズのスコアバー風） */}
       <div className="fixed right-4 top-4 z-20">
         {isLoggedIn ? (
@@ -156,28 +160,16 @@ export default function Home() {
             </button>
           </div>
         ) : (
-          <div className="flex items-center gap-2 rounded-full bg-white/60 px-3 py-2 shadow backdrop-blur">
-            <button
-              onClick={openSignup}
-              type="button"
-              className="rounded-full px-3 py-1 text-sm font-medium hover:bg-black/5"
-            >
-              新規登録
-            </button>
-            <button
-              onClick={openLogin}
-              type="button"
-              className="rounded-full px-3 py-1 text-sm font-medium hover:bg-black/5"
-            >
-              ログイン
-            </button>
-          </div>
+          //--- 新規登録・ログイン ---//
+          <AuthEntry onOpenSignup={openSignup} onOpenLogin={openLogin} />
         )}
       </div>
 
-      {/* 中央カード */}
-      <div className="mx-auto mt-8 max-w-xl px-4">
-        <HeroCard onStart={goStart} onOpenLogin={openLogin} />
+      {/* 中央カード（ヘッダー分を除いた領域のど真ん中） */}
+      <div className="flex flex-1 items-center justify-center px-4">
+        <div className="w-full max-w-xl">
+          <HeroCard onStart={goStart} onOpenLogin={openLogin} />
+        </div>
       </div>
 
       {/* ログイン / 新規登録モーダル */}

@@ -80,7 +80,7 @@ export default function QuizPage() {
 
         setQuestions(picked);
 
-        // ✅ 新しく問題を読み込んだらプレイ状態を初期化（保険）
+        // 新しく問題を読み込んだらプレイ状態を初期化
         setIndex(0);
         setSelected(null);
         setIsCorrect(null);
@@ -146,7 +146,6 @@ export default function QuizPage() {
       <main className="min-h-screen bg-base py-5">
         <AppHeader showConfirm />
 
-        {/* クイズ画面用のサブ情報（残り問題数） */}
         <div className="mx-auto max-w-xl px-4">
           <div className="rounded-2xl bg-white p-6 text-sm">読み込み中...</div>
         </div>
@@ -184,15 +183,21 @@ export default function QuizPage() {
     <main className="min-h-screen bg-base py-5">
       <AppHeader showConfirm />
 
-      <div className="mb-3 px-4 text-right text-lg text-hint">
+      {/* クイズ画面用のサブ情報（残り問題数） */}
+      {/* <div className="mb-3 px-4 text-right text-lg text-hint">
         Q {index + 1} / {total}
-      </div>
+      </div> */}
 
       {/* 中央寄せコンテンツ */}
       <div className="mx-auto max-w-xl px-4">
         {/* 画像（画像がある時だけ表示） */}
         {quiz.imageUrl ? (
-          <div className="mb-4">
+          <div className="mb-4 relative">
+            {/* Q表示：写真の右上・外側 */}
+            <div className="absolute -top-6 right-0 text-sm text-hint">
+              Q {index + 1} / {total}
+            </div>
+
             {/* 表示枠：サイズと比率を固定 */}
             <div className="relative w-full overflow-hidden rounded-2xl bg-gray-50 shadow-sm aspect-[4/3]">
               <Image
@@ -204,7 +209,7 @@ export default function QuizPage() {
                 className="object-cover object-center"
               />
 
-              {/* 右下にクレジットを重ねて表示 */}
+              {/* 右下にクレジット */}
               {quiz.imageCredit && (
                 <div className="absolute bottom-1 right-2 rounded bg-black/50 px-1 text-[10px] text-white">
                   {quiz.imageCredit}
