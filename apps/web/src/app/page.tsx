@@ -1,9 +1,10 @@
-'use client';
+"use client";
 
-import { useEffect, useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import AuthModal from "@/components/AuthModal";
 
-type Role = 'user' | 'admin';
+type Role = "user" | "admin";
 
 type LoginResponse = {
   message: string;
@@ -12,16 +13,16 @@ type LoginResponse = {
 };
 
 const API_BASE =
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3001';
+  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:3001";
 
 export default function Home() {
   const router = useRouter();
 
   const [showAuth, setShowAuth] = useState(false);
-  const [mode, setMode] = useState<'login' | 'signup'>('login');
+  const [mode, setMode] = useState<"login" | "signup">("login");
 
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
   const [me, setMe] = useState<null | {
     id: number;
@@ -29,15 +30,15 @@ export default function Home() {
     role: Role;
   }>(null);
   const [loading, setLoading] = useState(false);
-  const [errorMsg, setErrorMsg] = useState<string>('');
+  const [errorMsg, setErrorMsg] = useState<string>("");
 
   const isLoggedIn = useMemo(() => !!me, [me]);
 
   useEffect(() => {
     // 起動時にローカル保存から復元
     try {
-      const raw = localStorage.getItem('user');
-      const token = localStorage.getItem('token');
+      const raw = localStorage.getItem("user");
+      const token = localStorage.getItem("token");
       if (raw && token) setMe(JSON.parse(raw));
     } catch {
       // noop
@@ -45,51 +46,51 @@ export default function Home() {
   }, []);
 
   const openLogin = () => {
-    setMode('login');
-    setErrorMsg('');
+    setMode("login");
+    setErrorMsg("");
     setShowAuth(true);
   };
 
   const openSignup = () => {
-    setMode('signup');
-    setErrorMsg('');
+    setMode("signup");
+    setErrorMsg("");
     setShowAuth(true);
   };
 
   const logout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
     setMe(null);
   };
 
   const goStart = () => {
     // ゲストで遊べる：未ログインでも /quiz に進める
-    router.push('/quiz');
+    router.push("/quiz");
   };
 
   const afterLoginNavigate = (role: Role) => {
     // admin は管理画面へ、user は TOP に戻す
-    if (role === 'admin') router.push('/admin/quizzes');
-    else router.push('/');
+    if (role === "admin") router.push("/admin/quizzes");
+    else router.push("/");
   };
 
   const submit = async () => {
     setLoading(true);
-    setErrorMsg('');
+    setErrorMsg("");
 
     try {
       if (!email.trim() || !password) {
-        setErrorMsg('メールアドレスとパスワードを入力してください');
+        setErrorMsg("メールアドレスとパスワードを入力してください");
         return;
       }
 
-      if (mode === 'signup') {
+      if (mode === "signup") {
         // signup: { user: { email, password } } 形式（Rails実装に合わせてる）
         const res = await fetch(`${API_BASE}/auth/signup`, {
-          method: 'POST',
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
-            Accept: 'application/json',
+            "Content-Type": "application/json",
+            Accept: "application/json",
           },
           body: JSON.stringify({ user: { email: email.trim(), password } }),
         });
@@ -97,21 +98,21 @@ export default function Home() {
         if (!res.ok) {
           const data = await res.json().catch(() => null);
           setErrorMsg(
-            data?.errors?.join?.('\n') ?? data?.message ?? '登録に失敗しました',
+            data?.errors?.join?.("\n") ?? data?.message ?? "登録に失敗しました",
           );
           return;
         }
 
         // 登録後はそのままログインさせる（UX良い）
-        setMode('login');
+        setMode("login");
       }
 
       // login: { email, password } 形式（あなたのRails実装に合わせてる）
       const res = await fetch(`${API_BASE}/auth/login`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
+          "Content-Type": "application/json",
+          Accept: "application/json",
         },
         body: JSON.stringify({ email: email.trim(), password }),
       });
@@ -119,18 +120,18 @@ export default function Home() {
       const data = (await res.json().catch(() => null)) as LoginResponse | null;
 
       if (!res.ok || !data?.token) {
-        setErrorMsg((data as any)?.message ?? 'ログインに失敗しました');
+        setErrorMsg((data as any)?.message ?? "ログインに失敗しました");
         return;
       }
 
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
       setMe(data.user);
       setShowAuth(false);
 
       afterLoginNavigate(data.user.role);
     } catch (e) {
-      setErrorMsg('通信に失敗しました（APIが起動しているか確認してね）');
+      setErrorMsg("通信に失敗しました（APIが起動しているか確認してね）");
     } finally {
       setLoading(false);
     }
@@ -186,83 +187,20 @@ export default function Home() {
       </div>
 
       {/* ログイン / 新規登録モーダル */}
-      {showAuth && (
-        <div className="modalOverlay" onClick={() => setShowAuth(false)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modalHeader">
-              <div className="tabs">
-                <button
-                  className={mode === 'login' ? 'tab active' : 'tab'}
-                  onClick={() => {
-                    setMode('login');
-                    setErrorMsg('');
-                  }}
-                >
-                  ログイン
-                </button>
-                <button
-                  className={mode === 'signup' ? 'tab active' : 'tab'}
-                  onClick={() => {
-                    setMode('signup');
-                    setErrorMsg('');
-                  }}
-                >
-                  新規登録
-                </button>
-              </div>
-              <button className="closeBtn" onClick={() => setShowAuth(false)}>
-                ✕
-              </button>
-            </div>
-
-            <div className="form">
-              <label className="label">
-                メール
-                <input
-                  className="input"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="test@example.com"
-                  autoComplete="email"
-                />
-              </label>
-
-              <label className="label">
-                パスワード
-                <input
-                  className="input"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  type="password"
-                  placeholder="password"
-                  autoComplete={
-                    mode === 'signup' ? 'new-password' : 'current-password'
-                  }
-                />
-              </label>
-
-              {errorMsg && <p className="error">{errorMsg}</p>}
-
-              <button
-                className="primaryBtn"
-                onClick={submit}
-                disabled={loading}
-              >
-                {loading
-                  ? '送信中...'
-                  : mode === 'signup'
-                    ? '登録してログインへ'
-                    : 'ログイン'}
-              </button>
-
-              <p className="hint">
-                ※ 管理者も同じフォームでログインできます（role が admin
-                なら自動で /admin/quizzes へ）
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
+      <AuthModal
+        open={showAuth}
+        mode={mode}
+        setMode={setMode}
+        email={email}
+        setEmail={setEmail}
+        password={password}
+        setPassword={setPassword}
+        errorMsg={errorMsg}
+        setErrorMsg={setErrorMsg}
+        loading={loading}
+        onSubmit={submit}
+        onClose={() => setShowAuth(false)}
+      />
 
       <style jsx>{`
         .container {
