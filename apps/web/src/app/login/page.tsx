@@ -1,14 +1,69 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+
+type Role = 'user' | 'admin';
+
+type LoginResponse = {
+  message: string;
+  token?: string;
+  user?: { id: number; email: string; role: Role };
+};
+
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3001';
 
 export default function LoginPage() {
+  const router = useRouter();
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+
   const handleLogin = async () => {
-    // 今は仮。APIができたらここを使う
-    console.log(email, password);
+    setLoading(true);
+    setErrorMsg('');
+
+    try {
+      if (!email.trim() || !password) {
+        setErrorMsg('メールアドレスとパスワードを入力してください');
+        return;
+      }
+
+      const res = await fetch(`${API_BASE}/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify({ email: email.trim(), password }),
+      });
+
+      const data = (await res.json().catch(() => null)) as LoginResponse | null;
+
+      if (!res.ok || !data?.token || !data?.user) {
+        setErrorMsg((data as any)?.message ?? 'ログインに失敗しました');
+        return;
+      }
+
+      // admin 以外は管理画面に入れない（最短のガード）
+      if (data.user.role !== 'admin') {
+        setErrorMsg('管理者アカウントではありません');
+        return;
+      }
+
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+
+      router.push('/admin/quizzes');
+    } catch {
+      setErrorMsg('通信に失敗しました（APIが起動しているか確認してね）');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -22,6 +77,7 @@ export default function LoginPage() {
           placeholder="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          autoComplete="email"
         />
 
         <input
@@ -30,10 +86,17 @@ export default function LoginPage() {
           placeholder="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+          autoComplete="current-password"
         />
 
-        <button className="loginButton" onClick={handleLogin}>
-          ログイン
+        {errorMsg && <p className="error">{errorMsg}</p>}
+
+        <button
+          className="loginButton"
+          onClick={handleLogin}
+          disabled={loading}
+        >
+          {loading ? 'ログイン中...' : 'ログイン'}
         </button>
       </div>
 
@@ -46,7 +109,7 @@ export default function LoginPage() {
           background: linear-gradient(to bottom, #cceeff, #e6f7d9);
         }
 
-        // card レイアウト共通 → 後でコンポーネント化しやすい
+        /* card レイアウト共通 → 後でコンポーネント化しやすい */
         .card {
           background: white;
           padding: 48px;
@@ -76,6 +139,13 @@ export default function LoginPage() {
           font-size: 14px;
         }
 
+        .error {
+          margin: 0 0 12px;
+          font-size: 13px;
+          color: #d33;
+          white-space: pre-wrap;
+        }
+
         .loginButton {
           width: 100%;
           padding: 12px;
@@ -90,6 +160,13 @@ export default function LoginPage() {
         .loginButton:hover {
           transform: translateY(2px);
           box-shadow: 0 2px 0 #e6b84d;
+        }
+
+        .loginButton:disabled {
+          opacity: 0.7;
+          cursor: not-allowed;
+          transform: none;
+          box-shadow: 0 4px 0 #e6b84d;
         }
       `}</style>
     </main>
