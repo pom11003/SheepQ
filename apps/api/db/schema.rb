@@ -30,12 +30,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_21_061523) do
 
   create_table "choices", force: :cascade do |t|
     t.datetime "created_at", null: false
-    t.boolean "is_correct", default: false, null: false
+    t.boolean "is_correct"
     t.bigint "quiz_id", null: false
-    t.integer "sort_order", null: false
-    t.string "text", null: false
+    t.integer "sort_order"
+    t.string "text"
     t.datetime "updated_at", null: false
-    t.index ["quiz_id", "sort_order"], name: "index_choices_on_quiz_id_and_sort_order", unique: true
     t.index ["quiz_id"], name: "index_choices_on_quiz_id"
   end
 
