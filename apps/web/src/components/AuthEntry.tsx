@@ -18,7 +18,6 @@ export default function AuthEntry({
       >
         新規登録
       </button>
-
       <button
         onClick={onOpenLogin}
         type="button"
