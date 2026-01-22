@@ -24,9 +24,9 @@ export function HeroCard({
       </p>
 
       {/* 遊び方 */}
-      <div className="mx-10 px-5 mt-10 rounded-2xl bg-gray-50 p-4 text-xs text-hint">
-        <div className="font-semibold text-gray-700">遊び方</div>
-        <ul className="mt-2 list-disc space-y-1 pl-5">
+      <div className="mx-10 px-5 mt-10 rounded-2xl bg-gray-50 p-4  text-hint">
+        <div className="text-s font-semibold text-gray-700">遊び方</div>
+        <ul className="text-xs mt-2 list-disc space-y-1 pl-5">
           <li>ランダムで10問出題されます</li>
           <li>回答すると正解と解説が表示されます</li>
           <li>スコアはひつじ換算です 🐏</li>
