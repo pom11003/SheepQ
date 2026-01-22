@@ -30,7 +30,7 @@ export default async function ResultPage({ searchParams }: PageProps) {
             : "まずはメェーから覚えよう 🐏📚";
 
   return (
-    <main className="min-h-screen bg-base py-5">
+    <main className="min-h-screen bg-base">
       <AppHeader />
 
       <div className="mx-auto max-w-xl px-4">
@@ -46,10 +46,12 @@ export default async function ResultPage({ searchParams }: PageProps) {
           <div className="mt-5 h-px w-full bg-black/5" />
 
           {/* 評価メッセージ */}
-          <p className="mt-6 text-lg font-bold leading-relaxed">{message}</p>
+          <p className="mt-3 py-8 text-lg font-bold leading-relaxed">
+            {message}
+          </p>
 
           {/* スコア */}
-          <p className="mt-5 text-base font-semibold">
+          <p className="my-5-5 text-hint font-semibold">
             あなたは{" "}
             <span className="text-accent1 text-3xl font-bold tabular-nums">
               {safeScore}
@@ -60,24 +62,23 @@ export default async function ResultPage({ searchParams }: PageProps) {
           <p className="mt-2 text-sm text-gray-500">正答率：{rate}%</p>
 
           {/* 羊 */}
-          <div className="mt-5 text-3xl leading-relaxed">
+          <div className="mt-10 text-3xl leading-relaxed">
             {Array.from({ length: safeScore }).map((_, i) => (
               <span key={i}>🐏</span>
             ))}
           </div>
 
-          {/* ボタン */}
-          <div className="mt-8 grid gap-3">
+          <div className="mt-5 pb-10 mx-10 grid gap-3">
             <Link
               href="/quiz"
-              className="rounded-xl bg-accent1 px-4 py-3 text-sm font-bold text-white hover:opacity-90"
+              className="rounded-2xl bg-accent1 mt-10 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:opacity-90 active:scale-[0.99]"
             >
               もう1回やる
             </Link>
 
             <Link
               href="/"
-              className="rounded-xl border bg-base px-4 py-3 text-sm font-bold hover:opacity-80"
+              className="rounded-2xl border border-gray-200 shadow-sm bg-white px-6 py-3 text-sm font-semibold hover:bg-gray-50 active:scale-[0.99]"
             >
               TOPへ戻る
             </Link>

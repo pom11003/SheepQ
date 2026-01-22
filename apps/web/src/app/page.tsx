@@ -141,7 +141,7 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-screen bg-base py-5 relative">
+    <main className="min-h-screen bg-base relative">
       {/* 共通ヘッダー */}
       <AppHeader />
 

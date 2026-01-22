@@ -10,7 +10,7 @@ export default function AuthEntry({
   onOpenLogin,
 }: AuthEntryProps) {
   return (
-    <div className="flex items-center gap-2 rounded-full bg-white/60 px-3 py-2 mt-3 shadow backdrop-blur">
+    <div className="flex items-center gap-2 rounded-full bg-white/60 px-3 py-2 my-5 shadow backdrop-blur">
       <button
         onClick={onOpenSignup}
         type="button"

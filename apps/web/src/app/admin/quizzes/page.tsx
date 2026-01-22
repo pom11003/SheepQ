@@ -1,361 +1,402 @@
-"use client";
+'use client';
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from 'react';
+import { quizzes as seedQuizzes } from '@/lib/quizzes';
 
-type Choice = {
-  id: number;
-  quiz_id: number;
-  text: string;
-  is_correct: boolean;
-  sort_order: number;
-  created_at: string;
-  updated_at: string;
-};
-
-type Quiz = {
-  id: number;
-  image_url: string | null;
+type AdminQuiz = {
+  id: string;
   question: string;
-  explanation: string | null;
-  is_published: boolean;
-  created_at: string;
-  updated_at: string;
-  choices: Choice[];
+  choices: string[];
+  correctIndex: number;
+  explanation: string;
+  isPublished: boolean;
+  imageUrl?: string;
+  imageCredit?: string;
 };
 
-type ChoiceDraft = {
-  text: string;
-  is_correct: boolean;
-  sort_order: number;
-};
-
-const API_BASE = "http://localhost:3001";
+function uid() {
+  return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
 
 export default function AdminQuizzesPage() {
-  const [quizzes, setQuizzes] = useState<Quiz[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string>("");
-
-  // form state
-  const [question, setQuestion] = useState("");
-  const [explanation, setExplanation] = useState("");
-  const [choices, setChoices] = useState<ChoiceDraft[]>([
-    { sort_order: 1, text: "", is_correct: true },
-    { sort_order: 2, text: "", is_correct: false },
-    { sort_order: 3, text: "", is_correct: false },
-    { sort_order: 4, text: "", is_correct: false },
-  ]);
-
-  const correctCount = useMemo(
-    () => choices.filter((c) => c.is_correct).length,
-    [choices]
-  );
-
-  const load = async () => {
-    try {
-      setError("");
-      const res = await fetch(`${API_BASE}/admin/quizzes`, { cache: "no-store" });
-      if (!res.ok) throw new Error(`GET failed: ${res.status}`);
-      const data = (await res.json()) as Quiz[];
-      setQuizzes(data);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "unknown error");
-    }
-  };
-
-  // ✅ 追加：公開/非公開切り替え（PATCH）
-  const togglePublish = async (id: number, next: boolean) => {
-    setError("");
-    try {
-      const res = await fetch(`${API_BASE}/admin/quizzes/${id}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ is_published: next }),
-      });
-
-      if (!res.ok) {
-        const text = await res.text();
-        throw new Error(`PATCH failed: ${res.status}\n${text}`);
-      }
-
-      const updated = (await res.json()) as Quiz;
-
-      // 一覧を更新（該当の1件だけ差し替え）
-      setQuizzes((prev) => prev.map((q) => (q.id === id ? updated : q)));
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "unknown error");
-    }
-  };
-
-  useEffect(() => {
-    load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  // まずは lib/quizzes を管理画面用に変換して仮表示
+  const initial: AdminQuiz[] = useMemo(() => {
+    return (seedQuizzes ?? []).map((q: any, i: number) => ({
+      id: `seed-${i}`,
+      question: q.question,
+      choices: q.choices,
+      correctIndex: q.correctIndex,
+      explanation: q.explanation,
+      imageUrl: q.imageUrl,
+      imageCredit: q.imageCredit,
+      // seed側に無いので一旦 true 扱い（公開）
+      isPublished: true,
+    }));
   }, []);
 
-  const updateChoiceText = (idx: number, text: string) => {
-    setChoices((prev) => prev.map((c, i) => (i === idx ? { ...c, text } : c)));
+  const [items, setItems] = useState<AdminQuiz[]>(initial);
+
+  // 追加フォーム（まずは最小限）
+  const [question, setQuestion] = useState('');
+  const [choicesText, setChoicesText] = useState('A\nB\nC\nD');
+  const [correctIndex, setCorrectIndex] = useState(0);
+  const [explanation, setExplanation] = useState('');
+  const [isPublished, setIsPublished] = useState(true);
+
+  const choices = useMemo(() => {
+    return choicesText
+      .split('\n')
+      .map((s) => s.trim())
+      .filter(Boolean);
+  }, [choicesText]);
+
+  const canAdd =
+    question.trim().length > 0 &&
+    choices.length >= 2 &&
+    correctIndex >= 0 &&
+    correctIndex < choices.length;
+
+  const onAdd = () => {
+    if (!canAdd) return;
+
+    const newQuiz: AdminQuiz = {
+      id: uid(),
+      question: question.trim(),
+      choices,
+      correctIndex,
+      explanation: explanation.trim(),
+      isPublished,
+    };
+
+    setItems((prev) => [newQuiz, ...prev]);
+
+    // フォーム初期化（最低限）
+    setQuestion('');
+    setExplanation('');
+    setCorrectIndex(0);
+    setChoicesText('A\nB\nC\nD');
+    setIsPublished(true);
   };
 
-  const setCorrectIndex = (idx: number) => {
-    // 「正解は1つ」運用にする（要件が「1つ以上」ならここを複数可に変えられる）
-    setChoices((prev) => prev.map((c, i) => ({ ...c, is_correct: i === idx })));
+  const onRemove = (id: string) => {
+    setItems((prev) => prev.filter((q) => q.id !== id));
   };
 
-  const validate = (): string | null => {
-    if (!question.trim()) return "問題文（question）は必須です。";
-    const empty = choices.find((c) => !c.text.trim());
-    if (empty) return "選択肢はすべて入力してください。";
-    if (correctCount < 1) return "正解の選択肢が1つ以上必要です。";
-    return null;
-  };
-
-  const onSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-
-    const msg = validate();
-    if (msg) {
-      setError(msg);
-      return;
-    }
-
-    setLoading(true);
-    setError("");
-
-    try {
-      // ★重要：APIが期待していた形（トップレベル question + choices）
-      const payloadObj = {
-        question: question.trim(),
-        explanation: explanation.trim() ? explanation.trim() : null,
-        choices: choices.map((c) => ({
-          sort_order: c.sort_order,
-          text: c.text.trim(),
-          is_correct: c.is_correct,
-        })),
-      };
-
-      const res = await fetch(`${API_BASE}/admin/quizzes`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payloadObj),
-      });
-
-      if (!res.ok) {
-        // エラー本文を見やすくする
-        const text = await res.text();
-        throw new Error(`POST failed: ${res.status}\n${text}`);
-      }
-
-      // 作成されたquizが返ってくる前提（あなたのAPIは返ってきてました）
-      const created = (await res.json()) as Quiz;
-
-      // 先頭に追加（最新が上）
-      setQuizzes((prev) => [created, ...prev]);
-
-      // フォームをリセット
-      setQuestion("");
-      setExplanation("");
-      setChoices([
-        { sort_order: 1, text: "", is_correct: true },
-        { sort_order: 2, text: "", is_correct: false },
-        { sort_order: 3, text: "", is_correct: false },
-        { sort_order: 4, text: "", is_correct: false },
-      ]);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "unknown error");
-    } finally {
-      setLoading(false);
-    }
+  // 一覧側で公開/非公開を切り替えられるようにもしておく（任意だけど便利）
+  const onTogglePublished = (id: string) => {
+    setItems((prev) =>
+      prev.map((q) =>
+        q.id === id ? { ...q, isPublished: !q.isPublished } : q,
+      ),
+    );
   };
 
   return (
-    <div className="min-h-screen bg-zinc-50 p-6">
-      <div className="mx-auto max-w-3xl space-y-6">
-        <header className="flex items-end justify-between">
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight">
-              Admin Quizzes
-            </h1>
-            <p className="mt-1 text-sm text-zinc-600">
-              一覧 + 新規作成（POST） + 公開/非公開切替（PATCH）
-            </p>
-          </div>
-          <div className="rounded-full bg-white px-3 py-1 text-sm text-zinc-700 shadow-sm ring-1 ring-zinc-200">
-            {quizzes.length} 件
+    <main className="min-h-screen bg-base">
+      {/* ふわっと羊っぽい背景（点々＋もこもこ） */}
+      <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
+        {/* ドット */}
+        <div
+          className="absolute inset-0 opacity-[0.28]"
+          style={{
+            backgroundImage:
+              'radial-gradient(rgba(191,134,65,0.20) 1px, transparent 1px)',
+            backgroundSize: '18px 18px',
+          }}
+        />
+        {/* もこもこブロブ */}
+        <div className="absolute -top-24 -left-24 h-72 w-72 rounded-full bg-accent1/10 blur-2xl" />
+        <div className="absolute -bottom-24 -right-24 h-80 w-80 rounded-full bg-accent1/10 blur-2xl" />
+        <div className="absolute top-1/3 right-10 h-56 w-56 rounded-full bg-correct/10 blur-2xl" />
+      </div>
+
+      {/* 外側に余白（上下左右） */}
+      <div className="px-4 py-8 sm:px-6 lg:px-8">
+        {/* ヘッダー */}
+        <header className="mx-auto max-w-5xl">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div className="flex items-start gap-3">
+              {/* 小さな羊キャラ（絵文字） */}
+              <div className="mt-1 flex h-11 w-11 items-center justify-center rounded-2xl bg-white shadow-sm border border-gray-100">
+                <span className="text-2xl">🐑</span>
+              </div>
+
+              <div>
+                <h1 className="text-2xl font-semibold text-accent1">
+                  AdminQuizzes
+                </h1>
+                <p className="mt-1 text-sm text-hint">
+                  ひつじの世界をかんりします
+                </p>
+
+                {/* ちょい可愛いバッジ */}
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <span className="rounded-full bg-white/80 px-3 py-1 text-xs font-semibold text-accent1 border border-accent1/20 shadow-sm">
+                    Sheep Q 管理
+                  </span>
+                  <span className="rounded-full bg-white/80 px-3 py-1 text-xs font-semibold text-hint border border-gray-200 shadow-sm">
+                    追加・削除（まずはUI）
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="self-start sm:self-auto">
+              <div className="rounded-full bg-white/90 px-4 py-2 shadow-sm text-sm text-hint border border-gray-100">
+                合計{' '}
+                <span className="font-semibold text-accent1">
+                  {items.length}
+                </span>{' '}
+                問
+              </div>
+            </div>
           </div>
         </header>
 
-        {error && (
-          <div className="whitespace-pre-wrap rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-            {error}
-          </div>
-        )}
-
-        {/* Create Form */}
-        <section className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-zinc-200">
-          <h2 className="text-lg font-semibold text-zinc-900">新規作成</h2>
-
-          <form className="mt-4 space-y-4" onSubmit={onSubmit}>
-            <div>
-              <label className="text-sm font-medium text-zinc-800">
-                問題文（question）
-              </label>
-              <input
-                className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-zinc-300"
-                value={question}
-                onChange={(e) => setQuestion(e.target.value)}
-                placeholder="例：羊の英語はどれ？"
-              />
+        {/* コンテンツ */}
+        <div className="mx-auto mt-6 grid max-w-5xl grid-cols-1 gap-6 lg:grid-cols-[420px_1fr]">
+          {/* 追加フォーム */}
+          <section className="rounded-3xl bg-card p-5 shadow-sm border border-gray-100">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-accent1">
+                ＋ クイズを追加
+              </h2>
+              <span className="text-lg">🐏</span>
             </div>
 
-            <div>
-              <label className="text-sm font-medium text-zinc-800">
-                解説（explanation）※任意
-              </label>
-              <textarea
-                className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-zinc-300"
-                value={explanation}
-                onChange={(e) => setExplanation(e.target.value)}
-                placeholder="例：sheep が羊。goat はヤギ。"
-                rows={3}
-              />
-            </div>
-
-            <div>
-              <div className="flex items-center justify-between">
-                <label className="text-sm font-medium text-zinc-800">
-                  選択肢（choices）
+            <div className="mt-4 space-y-4">
+              <div>
+                <label className="text-sm font-medium text-gray-700">
+                  問題文
                 </label>
-                <span className="text-xs text-zinc-500">
-                  正解は 1つ選択（現在: {correctCount}）
-                </span>
+                <input
+                  value={question}
+                  onChange={(e) => setQuestion(e.target.value)}
+                  placeholder="例）羊の毛が伸び続ける理由は？"
+                  className="mt-1 w-full rounded-2xl border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:border-accent1/60"
+                />
               </div>
 
-              <div className="mt-2 space-y-2">
-                {choices.map((c, idx) => (
-                  <div
-                    key={c.sort_order}
-                    className="flex items-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2"
+              <div>
+                <label className="text-sm font-medium text-gray-700">
+                  選択肢（改行区切り）
+                </label>
+                <textarea
+                  value={choicesText}
+                  onChange={(e) => setChoicesText(e.target.value)}
+                  rows={5}
+                  className="mt-1 w-full rounded-2xl border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:border-accent1/60"
+                />
+                <p className="mt-1 text-xs text-hint">
+                  今は最低2個でOK（おすすめは4択）。
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-sm font-medium text-gray-700">
+                    正解番号
+                  </label>
+                  <select
+                    value={correctIndex}
+                    onChange={(e) => setCorrectIndex(Number(e.target.value))}
+                    className="mt-1 w-full rounded-2xl border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:border-accent1/60"
                   >
-                    <span className="w-6 text-right text-xs text-zinc-500">
-                      {c.sort_order}.
-                    </span>
-
-                    <input
-                      className="flex-1 rounded-lg border border-zinc-200 bg-white px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-zinc-300"
-                      value={c.text}
-                      onChange={(e) => updateChoiceText(idx, e.target.value)}
-                      placeholder="選択肢テキスト"
-                    />
-
-                    <label className="flex items-center gap-2 text-xs text-zinc-700">
-                      <input
-                        type="radio"
-                        name="correct"
-                        checked={c.is_correct}
-                        onChange={() => setCorrectIndex(idx)}
-                      />
-                      正解
-                    </label>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="inline-flex items-center justify-center rounded-xl bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-60"
-            >
-              {loading ? "作成中..." : "作成（POST）"}
-            </button>
-          </form>
-        </section>
-
-        {/* List */}
-        <section className="space-y-4">
-          {quizzes.map((q) => {
-            const sortedChoices = q.choices
-              .slice()
-              .sort((a, b) => a.sort_order - b.sort_order);
-
-            return (
-              <article
-                key={q.id}
-                className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-zinc-200"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="inline-flex items-center rounded-full bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-700">
-                        #{q.id}
-                      </span>
-
-                      {q.is_published ? (
-                        <span className="inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 ring-1 ring-emerald-200">
-                          公開
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center rounded-full bg-zinc-50 px-2 py-0.5 text-xs font-medium text-zinc-700 ring-1 ring-zinc-200">
-                          非公開
-                        </span>
-                      )}
-
-                      {/* ✅ 追加：公開/非公開 切替ボタン */}
-                      <button
-                        type="button"
-                        onClick={() => togglePublish(q.id, !q.is_published)}
-                        className="inline-flex items-center justify-center rounded-xl border border-zinc-200 bg-white px-3 py-1 text-xs font-medium text-zinc-700 hover:bg-zinc-50"
-                      >
-                        {q.is_published ? "非公開にする" : "公開にする"}
-                      </button>
-                    </div>
-
-                    <h3 className="mt-2 text-lg font-semibold leading-snug text-zinc-900">
-                      {q.question}
-                    </h3>
-
-                    {q.explanation && (
-                      <p className="mt-2 text-sm text-zinc-600">
-                        {q.explanation}
-                      </p>
-                    )}
-                  </div>
-
-                  <time className="shrink-0 text-xs text-zinc-500">
-                    {new Date(q.created_at).toLocaleString()}
-                  </time>
+                    {choices.map((_, i) => (
+                      <option key={i} value={i}>
+                        {i + 1} 番目
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
-                <ol className="mt-4 space-y-2">
-                  {sortedChoices.map((c) => (
-                    <li
-                      key={c.id}
-                      className="flex items-center justify-between rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2"
+                <div className="rounded-2xl border border-gray-100 bg-base px-3 py-2">
+                  <div className="text-xs text-hint">プレビュー</div>
+                  <div className="mt-1 text-sm font-medium">
+                    {choices[correctIndex] ?? '—'}
+                  </div>
+                </div>
+              </div>
+
+              {/* ★ 公開 / 非公開 トグル */}
+              <div className="rounded-2xl border border-gray-100 bg-base px-3 py-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <div className="text-sm font-medium text-gray-700">
+                      公開設定
+                    </div>
+                    <div className="mt-1 text-xs text-hint">
+                      公開にするとユーザーに出題されます（いまはUIのみ）
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setIsPublished((v) => !v)}
+                    aria-pressed={isPublished}
+                    className={[
+                      'relative inline-flex h-9 w-[76px] items-center rounded-full border transition',
+                      isPublished
+                        ? 'bg-accent1/90 border-accent1/30'
+                        : 'bg-white border-gray-200',
+                    ].join(' ')}
+                  >
+                    <span
+                      className={[
+                        'absolute left-1 top-1 h-7 w-7 rounded-full bg-white shadow-sm transition-transform',
+                        isPublished ? 'translate-x-[40px]' : 'translate-x-0',
+                      ].join(' ')}
+                    />
+                    <span
+                      className={[
+                        'w-full text-xs font-semibold',
+                        isPublished ? 'text-white' : 'text-gray-500',
+                      ].join(' ')}
                     >
-                      <div className="flex items-center gap-2">
-                        <span className="w-6 text-right text-xs text-zinc-500">
-                          {c.sort_order}.
+                      {isPublished ? '公開' : '非公開'}
+                    </span>
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-gray-700">
+                  解説
+                </label>
+                <textarea
+                  value={explanation}
+                  onChange={(e) => setExplanation(e.target.value)}
+                  placeholder="例）羊は自然環境では…"
+                  rows={4}
+                  className="mt-1 w-full rounded-2xl border border-gray-200 bg-white px-3 py-2 text-sm outline-none focus:border-accent1/60"
+                />
+              </div>
+
+              <button
+                type="button"
+                onClick={onAdd}
+                disabled={!canAdd}
+                className={[
+                  'w-full rounded-2xl px-4 py-3 text-sm font-semibold text-white transition',
+                  canAdd
+                    ? 'bg-accent1 hover:opacity-90'
+                    : 'bg-gray-300 cursor-not-allowed',
+                ].join(' ')}
+              >
+                追加する
+              </button>
+
+              {!canAdd ? (
+                <p className="text-xs text-hint">
+                  問題文 / 選択肢(2つ以上) / 正解番号 が揃うと追加できます。
+                </p>
+              ) : null}
+            </div>
+          </section>
+
+          {/* 一覧 */}
+          <section className="rounded-3xl bg-card p-5 shadow-sm border border-gray-100">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <h2 className="text-lg font-semibold text-accent1">クイズ一覧</h2>
+              <div className="text-xs text-hint">
+                ※ いまはローカル状態（更新しても保存されません）
+              </div>
+            </div>
+
+            <div className="mt-4 space-y-3">
+              {items.map((q, idx) => (
+                <article
+                  key={q.id}
+                  className="rounded-3xl border border-gray-100 bg-white p-4 shadow-sm"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="flex items-center gap-2 text-xs text-hint">
+                        <span className="rounded-full bg-base px-2 py-1 border border-gray-100">
+                          #{idx + 1}
                         </span>
-                        <span className="text-sm text-zinc-900">{c.text}</span>
+                        <span className="font-mono">id: {q.id}</span>
+                        <span className="text-sm">🐑</span>
+
+                        {/* 公開/非公開バッジ */}
+                        <span
+                          className={[
+                            'ml-1 rounded-full px-2 py-1 text-[11px] font-semibold border',
+                            q.isPublished
+                              ? 'bg-correct/10 text-correct border-correct/20'
+                              : 'bg-gray-100 text-gray-600 border-gray-200',
+                          ].join(' ')}
+                        >
+                          {q.isPublished ? '公開' : '非公開'}
+                        </span>
                       </div>
 
-                      {c.is_correct ? (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 ring-1 ring-emerald-200">
-                          ✅ 正解
-                        </span>
+                      <h3 className="mt-2 text-sm font-semibold">
+                        Q. {q.question}
+                      </h3>
+
+                      <div className="mt-3 grid grid-cols-2 gap-2">
+                        {q.choices.map((c, i) => {
+                          const isAnswer = i === q.correctIndex;
+                          return (
+                            <div
+                              key={i}
+                              className={[
+                                'rounded-2xl border px-3 py-2 text-sm',
+                                isAnswer
+                                  ? 'border-correct bg-correct/10'
+                                  : 'border-gray-200 bg-white',
+                              ].join(' ')}
+                            >
+                              {c}
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {q.explanation ? (
+                        <p className="mt-3 whitespace-pre-line text-sm text-gray-600">
+                          {q.explanation}
+                        </p>
                       ) : (
-                        <span className="text-xs text-zinc-400">　</span>
+                        <p className="mt-3 text-sm text-hint">（解説なし）</p>
                       )}
-                    </li>
-                  ))}
-                </ol>
-              </article>
-            );
-          })}
-        </section>
+                    </div>
+
+                    <div className="flex shrink-0 flex-col items-end gap-2">
+                      <span className="rounded-full px-3 py-1 text-xs font-semibold bg-accent1/10 text-accent1 border border-accent1/20">
+                        正解: {q.correctIndex + 1}
+                      </span>
+
+                      <button
+                        type="button"
+                        onClick={() => onTogglePublished(q.id)}
+                        className="rounded-2xl border border-gray-200 bg-white px-3 py-2 text-sm hover:bg-gray-50"
+                      >
+                        {q.isPublished ? '非公開にする' : '公開にする'}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => onRemove(q.id)}
+                        className="rounded-2xl border border-gray-200 bg-white px-3 py-2 text-sm hover:bg-gray-50"
+                      >
+                        削除
+                      </button>
+                    </div>
+                  </div>
+                </article>
+              ))}
+
+              {items.length === 0 ? (
+                <div className="rounded-3xl border border-gray-100 bg-base p-10 text-center text-hint">
+                  まだクイズがありません。左のフォームから追加してね 🐑
+                </div>
+              ) : null}
+            </div>
+          </section>
+        </div>
       </div>
-    </div>
+    </main>
   );
 }
