@@ -43,3 +43,14 @@ root@d949afe1dda3:/app# bin/rails secretの値とした
   認証担当だけが api を起動 あなた1人でOK
   全員が api を起動 各自で作る
   本番 1つを厳重管理
+
+###テスト実行
+実行コマンド（web 側）
+テスト実行（watch）
+npm run test
+
+カバレッジ付き（CI向け）
+npm run test:cov
+
+ESLint
+npm run lint
