@@ -32,7 +32,7 @@ module Admin
     private
 
     def quiz_params
-      params.permit(:question, choices: [:text, :is_correct, :sort_order])
+      params.permit(:question, choices: [ :text, :is_correct, :sort_order ])
     end
   end
 end

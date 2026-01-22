@@ -43,3 +43,34 @@ root@d949afe1dda3:/app# bin/rails secretの値とした
   認証担当だけが api を起動 あなた1人でOK
   全員が api を起動 各自で作る
   本番 1つを厳重管理
+
+## 開発
+
+本プロジェクトでは、コード品質を保つために Lint と CI を導入しています。
+
+### Lint（RuboCop）
+
+本プロジェクトでは Ruby のコード規約チェックに RuboCop を使用します。
+
+#### ルールチェック（自動修正なし）
+
+```bash
+docker compose exec api bundle exec rubocop
+```
+
+#### 自動修正（安全な範囲のみ）
+
+```bash
+docker compose exec api bundle exec rubocop -A
+```
+
+<br>
+
+### CI（GitHub Actions）
+
+Pull Request および main ブランチへの push 時に、
+GitHub Actions で RuboCop を自動実行します。
+
+#### 設定ファイル： .github/workflows/rubocop.yml
+
+CI により、コード規約に違反している場合は PR をマージできません。

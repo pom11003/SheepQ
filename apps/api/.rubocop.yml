@@ -1,8 +1,39 @@
-# Omakase Ruby styling for Rails
-inherit_gem: { rubocop-rails-omakase: rubocop.yml }
+# Omakase Ruby styling for Rails（まずはこれをベースにする）
+inherit_gem:
+  rubocop-rails-omakase: rubocop.yml
 
-# Overwrite or add rules to create your own house style
-#
-# # Use `[a, [b, c]]` not `[ a, [ b, c ] ]`
-# Layout/SpaceInsideArrayLiteralBrackets:
-#   Enabled: false
+# 追加でRails用Copを使いたい場合（必要になったら）
+# require:
+#   - rubocop-rails
+
+AllCops:
+  NewCops: enable
+  TargetRubyVersion: 3.3
+  Exclude:
+    - "db/schema.rb"
+    - "db/migrate/**/*"
+    - "bin/**/*"
+    - "node_modules/**/*"
+    - "vendor/**/*"
+
+# 行の長さは少し緩め（チーム開発で詰まりにくい）
+Layout/LineLength:
+  Max: 120
+
+# seeds.rb / routes.rb は長くなりがちなので除外
+Metrics/BlockLength:
+  Exclude:
+    - "db/seeds.rb"
+    - "config/routes.rb"
+
+# （必要なら）メソッド長の許容を少し緩め
+Metrics/MethodLength:
+  Max: 20
+
+# クラスのコメント強制はオフ
+Style/Documentation:
+  Enabled: false
+
+# frozen_string_literal のコメントは不要に（好み）
+Style/FrozenStringLiteralComment:
+  Enabled: false
