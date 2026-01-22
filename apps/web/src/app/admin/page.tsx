@@ -169,7 +169,7 @@ export default function AdminQuizzesPage() {
   };
 
   return (
-    <main className="min-h-screen bg-base">
+    <main className="min-h-screen bg-base ">
       <AppHeader />
       {/* 背景 */}
       <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
