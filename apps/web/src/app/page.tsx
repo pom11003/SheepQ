@@ -180,7 +180,7 @@ export default function Home() {
             }}
             title="管理者もここからログイン"
           >
-            🐑 管理者
+            🐑 ログインはこちら
           </button>
         </div>
       </div>
