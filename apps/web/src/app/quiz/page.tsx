@@ -4,7 +4,6 @@ import { useMemo, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { quizzes } from "@/lib/quizzes";
-import Link from "next/link";
 import AppHeader from "@/components/AppHeader";
 
 //----- シャッフル関数 -----//
@@ -75,7 +74,10 @@ export default function QuizPage() {
     }
 
     // 最後なら結果へ（score と total をURLにつけて渡したい）
-    router.push(`/result?score=${score}&total=${total}`);
+    // 念のため「今画面に出ているスコア」を使う（最終表示の値）
+    const finalScore = score;
+
+    router.push(`/result?score=${finalScore}&total=${total}`);
   };
 
   return (
