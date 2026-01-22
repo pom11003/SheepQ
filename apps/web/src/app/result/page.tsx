@@ -31,44 +31,53 @@ export default async function ResultPage({ searchParams }: PageProps) {
 
   return (
     <main className="min-h-screen bg-base py-5">
-      {/* 共通ヘッダー（確認なし） */}
       <AppHeader />
 
       <div className="mx-auto max-w-xl px-4">
-        {/* Result タイトル */}
-        <header className="text-center mt-6">
-          <h2 className="text-3xl font-bold">結果</h2>
-        </header>
+        <section className="mt-6 rounded-2xl bg-white p-6 sm:p-7 text-center shadow-sm">
+          {/* タイトル（カード内に入れて統一） */}
+          <div className="space-y-2">
+            <h2 className="text-2xl font-semibold tracking-tight text-accent1">
+              結果
+            </h2>
+            <p className="text-sm text-hint">今回のスコアはこちらです 🐏</p>
+          </div>
 
-        <section className="mt-8 rounded-2xl bg-white p-6 text-center shadow-sm">
-          {/* 評価メッセージ（ここが主役） */}
-          <p className="p-10 text-xl font-bold">{message}</p>
+          <div className="mt-5 h-px w-full bg-black/5" />
 
-          <p className="text-lg font-semibold">
+          {/* 評価メッセージ */}
+          <p className="mt-6 text-lg font-bold leading-relaxed">{message}</p>
+
+          {/* スコア */}
+          <p className="mt-5 text-base font-semibold">
             あなたは{" "}
-            <span className="text-accent1 text-2xl font-bold">{safeScore}</span>{" "}
-            / {safeTotal} 匹ゲット！
+            <span className="text-accent1 text-3xl font-bold tabular-nums">
+              {safeScore}
+            </span>{" "}
+            <span className="text-hint">/ {safeTotal}</span> 匹ゲット！
           </p>
 
           <p className="mt-2 text-sm text-gray-500">正答率：{rate}%</p>
 
+          {/* 羊 */}
           <div className="mt-5 text-3xl leading-relaxed">
             {Array.from({ length: safeScore }).map((_, i) => (
               <span key={i}>🐏</span>
             ))}
           </div>
 
-          <div className="mt-10 flex flex-col gap-3">
+          {/* ボタン */}
+          <div className="mt-8 grid gap-3">
             <Link
               href="/quiz"
-              className="rounded-xl bg-accent1 px-4 py-3 text-sm font-bold text-base hover:opacity-90"
+              className="rounded-xl bg-accent1 px-4 py-3 text-sm font-bold text-white hover:opacity-90"
             >
               もう1回やる
             </Link>
 
             <Link
               href="/"
-              className="rounded-xl bg-base border px-4 py-3 text-sm font-bold hover:opacity-70"
+              className="rounded-xl border bg-base px-4 py-3 text-sm font-bold hover:opacity-80"
             >
               TOPへ戻る
             </Link>

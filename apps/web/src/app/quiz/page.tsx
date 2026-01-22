@@ -1,9 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-// import { quizzes } from "@/lib/quizzes";
 import AppHeader from "@/components/AppHeader";
 
 //----- シャッフル関数 -----//
@@ -33,9 +32,18 @@ export default function QuizPage() {
   // ----- ランダム10問を最初に固定する -----//
   const PICK_COUNT = 10;
 
+  // ✅ Hooksは「returnの前」に全部置く
   const [questions, setQuestions] = useState<Quiz[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // 今何問目？
+  const [index, setIndex] = useState(0);
+  // 回答状態
+  const [selected, setSelected] = useState<number | null>(null);
+  const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
+  // 合計スコア（正解数）
+  const [score, setScore] = useState(0);
 
   useEffect(() => {
     const load = async () => {
@@ -52,7 +60,6 @@ export default function QuizPage() {
 
         const data = await res.json();
 
-        // choices([{text, sort_order...}]) → choices(string[]) に変換
         const normalized: Quiz[] = data.map((q: any) => {
           const sorted = [...(q.choices ?? [])].sort(
             (a: any, b: any) => a.sort_order - b.sort_order,
@@ -62,14 +69,22 @@ export default function QuizPage() {
             id: q.id,
             question: q.question,
             choices: sorted.map((c: any) => c.text),
-            correctIndex: q.correct_index, // Quizに correct_index がある前提
+            correctIndex: q.correct_index,
             explanation: q.explanation,
             imageUrl: q.image_url,
             imageCredit: q.image_credit,
           };
         });
 
-        setQuestions(shuffle(normalized).slice(0, PICK_COUNT));
+        const picked = shuffle(normalized).slice(0, PICK_COUNT);
+
+        setQuestions(picked);
+
+        // 新しく問題を読み込んだらプレイ状態を初期化
+        setIndex(0);
+        setSelected(null);
+        setIsCorrect(null);
+        setScore(0);
       } catch (e: any) {
         setError(e?.message ?? "failed");
       } finally {
@@ -80,25 +95,57 @@ export default function QuizPage() {
     load();
   }, []);
 
-  // const [questions] = useState(() => {
-  //   const n = Math.min(PICK_COUNT, quizzes.length); // 問題数が10未満でも安全
-  //   return shuffle(quizzes).slice(0, n);
-  // });
+  // ✅ 以降は「計算だけ」(Hookなし)
 
-  // 今何問目？
-  const [index, setIndex] = useState(0);
+  // ・total：問題数（表示に使う）
+  // ・quiz：今表示する1問
+  const total = questions.length;
+  const quiz = total > 0 ? questions[index] : null;
+  // 「回答済みか」を判定
+  const answered = selected !== null;
 
-  // 回答状態
-  const [selected, setSelected] = useState<number | null>(null); // ユーザーが選んだ選択肢の番号,まだ選んでない時は null
-  const [isCorrect, setIsCorrect] = useState<boolean | null>(null); // 正解だった？（true/false）
+  // onChoose :ユーザーが1つの選択肢を押した瞬間に起こる一連の処理
+  const onChoose = (choiceIndex: number) => {
+    if (!quiz) return;
+    if (answered) return; // 連打防止
 
-  // 合計スコア（正解数）
-  const [score, setScore] = useState(0);
+    setSelected(choiceIndex); // 「どれを選んだか」を記録
 
+    // 正解か判定
+    const correct = choiceIndex === quiz.correctIndex;
+    setIsCorrect(correct);
+
+    // 今の最新のスコア s を使って+1してね
+    if (correct) setScore((s) => s + 1);
+  };
+
+  // 次へボタン
+  const onNext = () => {
+    const nextIndex = index + 1;
+
+    // 状態リセット
+    setSelected(null);
+    setIsCorrect(null);
+
+    // まだ問題が残ってたら setIndex(nextIndex) して次の問題へ
+    if (nextIndex < total) {
+      setIndex(nextIndex);
+      return;
+    }
+
+    // 最後なら結果へ（score と total をURLにつけて渡したい）
+    // 念のため「今画面に出ているスコア」を使う（最終表示の値）
+    const finalScore = score;
+
+    router.push(`/result?score=${score}&total=${total}`);
+  };
+
+  // ✅ ここから下は return 分岐してOK（Hookはもう呼ばれてる）
   if (loading) {
     return (
       <main className="min-h-screen bg-base py-5">
         <AppHeader showConfirm />
+
         <div className="mx-auto max-w-xl px-4">
           <div className="rounded-2xl bg-white p-6 text-sm">読み込み中...</div>
         </div>
@@ -119,76 +166,38 @@ export default function QuizPage() {
     );
   }
 
-  if (questions.length === 0) {
+  if (!quiz) {
     return (
       <main className="min-h-screen bg-base py-5">
         <AppHeader showConfirm />
         <div className="mx-auto max-w-xl px-4">
           <div className="rounded-2xl bg-white p-6 text-sm">
-            問題がありません（公開中クイズが0件かも）
+            問題がありません（公開中クイズが0件かもしれません）
           </div>
         </div>
       </main>
     );
   }
 
-  // total：問題数（表示に使う）
-  // quiz：今表示する1問
-  const total = questions.length;
-  const quiz = useMemo(() => questions[index], [questions, index]);
-
-  // 「回答済みか」を判定
-  const answered = selected !== null;
-
-  // onChoose :ユーザーが1つの選択肢を押した瞬間に起こる一連の処理
-  const onChoose = (choiceIndex: number) => {
-    if (answered) return; // 連打防止
-
-    setSelected(choiceIndex); // 「どれを選んだか」を記録
-
-    // 正解か判定
-    const correct = choiceIndex === quiz.correctIndex;
-    setIsCorrect(correct);
-
-    // 今の最新のスコア s を使って+1してね
-    if (correct) setScore((s) => s + 1);
-  };
-
-  const onNext = () => {
-    // 次へ
-    const nextIndex = index + 1;
-
-    // 状態リセット
-    setSelected(null);
-    setIsCorrect(null);
-
-    // まだ問題が残ってたら setIndex(nextIndex) して次の問題へ
-    if (nextIndex < total) {
-      setIndex(nextIndex);
-      return;
-    }
-
-    // 最後なら結果へ（score と total をURLにつけて渡したい）
-    // 念のため「今画面に出ているスコア」を使う（最終表示の値）
-    const finalScore = score;
-
-    router.push(`/result?score=${finalScore}&total=${total}`);
-  };
-
   return (
     <main className="min-h-screen bg-base py-5">
       <AppHeader showConfirm />
 
-      {/* クイズ画面用のサブ情報 */}
-      <div className="mb-3 px-4 text-right text-lg text-hint">
+      {/* クイズ画面用のサブ情報（残り問題数） */}
+      {/* <div className="mb-3 px-4 text-right text-lg text-hint">
         Q {index + 1} / {total}
-      </div>
+      </div> */}
 
       {/* 中央寄せコンテンツ */}
       <div className="mx-auto max-w-xl px-4">
         {/* 画像（画像がある時だけ表示） */}
         {quiz.imageUrl ? (
-          <div className="mb-4">
+          <div className="mb-4 relative">
+            {/* Q表示：写真の右上・外側 */}
+            <div className="absolute -top-6 right-0 text-sm text-hint">
+              Q {index + 1} / {total}
+            </div>
+
             {/* 表示枠：サイズと比率を固定 */}
             <div className="relative w-full overflow-hidden rounded-2xl bg-gray-50 shadow-sm aspect-[4/3]">
               <Image
@@ -200,7 +209,7 @@ export default function QuizPage() {
                 className="object-cover object-center"
               />
 
-              {/* 右下にクレジットを重ねて表示 */}
+              {/* 右下にクレジット */}
               {quiz.imageCredit && (
                 <div className="absolute bottom-1 right-2 rounded bg-black/50 px-1 text-[10px] text-white">
                   {quiz.imageCredit}
@@ -226,13 +235,10 @@ export default function QuizPage() {
               const disabled = "opacity-80";
 
               let stateClass = "";
-
               if (answered) {
-                if (isAnswer)
-                  stateClass = "border-correct bg-correct/10"; // 正解は緑
-                else if (isSelected)
-                  stateClass = "border-wrong bg-wrong/10"; // 間違えて選んだのは赤
-                else stateClass = "border-gray-200 bg-white"; // その他は普通
+                if (isAnswer) stateClass = "border-correct bg-correct/10";
+                else if (isSelected) stateClass = "border-wrong bg-wrong/10";
+                else stateClass = "border-gray-200 bg-white";
               } else {
                 stateClass = "border-gray-200 bg-white";
               }
@@ -242,7 +248,7 @@ export default function QuizPage() {
                   key={i}
                   type="button"
                   onClick={() => onChoose(i)}
-                  disabled={answered} // 回答後はクリックできないようにする
+                  disabled={answered} // 回答後はクリックできないように
                   className={[
                     base,
                     stateClass,
@@ -289,6 +295,7 @@ export default function QuizPage() {
           </section>
         ) : null}
       </div>
+
       {/* 画面下固定のスコアバー */}
       <div className="fixed bottom-4 left-1/2 z-10 -translate-x-1/2">
         <div className="flex items-center gap-2 px-6 py-4 rounded-full bg-white/50 shadow text-lg font-bold text-accent1">

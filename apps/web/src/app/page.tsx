@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import AuthModal from "@/components/AuthModal";
 import { HeroCard } from "@/components/HeroCard";
+import AuthEntry from "@/components/AuthEntry";
+import AppHeader from "@/components/AppHeader";
 
 type Role = "user" | "admin";
 
@@ -139,8 +141,11 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-screen bg-base py-5">
-      {/* 右上：ログイン状態表示（クイズのスコアバー風） */}
+    <main className="min-h-screen bg-base py-5 relative">
+      {/* 共通ヘッダー */}
+      <AppHeader />
+
+      {/* 右上：ログイン状態表示 */}
       <div className="fixed right-4 top-4 z-20">
         {isLoggedIn ? (
           <div className="flex items-center gap-2 rounded-full bg-white/60 px-4 py-2 shadow backdrop-blur">
@@ -156,28 +161,15 @@ export default function Home() {
             </button>
           </div>
         ) : (
-          <div className="flex items-center gap-2 rounded-full bg-white/60 px-3 py-2 shadow backdrop-blur">
-            <button
-              onClick={openSignup}
-              type="button"
-              className="rounded-full px-3 py-1 text-sm font-medium hover:bg-black/5"
-            >
-              新規登録
-            </button>
-            <button
-              onClick={openLogin}
-              type="button"
-              className="rounded-full px-3 py-1 text-sm font-medium hover:bg-black/5"
-            >
-              ログイン
-            </button>
-          </div>
+          <AuthEntry onOpenSignup={openSignup} onOpenLogin={openLogin} />
         )}
       </div>
 
-      {/* 中央カード */}
-      <div className="mx-auto mt-8 max-w-xl px-4">
-        <HeroCard onStart={goStart} onOpenLogin={openLogin} />
+      {/* Resultと同じ幅・同じ開始位置 */}
+      <div className="mx-auto max-w-xl px-4">
+        <div className="mt-6">
+          <HeroCard onStart={goStart} onOpenLogin={openLogin} />
+        </div>
       </div>
 
       {/* ログイン / 新規登録モーダル */}
