@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
-import { useEffect, useMemo, useState } from 'react';
-import Image from 'next/image';
-import { useRouter } from 'next/navigation';
+import { useEffect, useMemo, useState } from "react";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
 // import { quizzes } from "@/lib/quizzes";
-import AppHeader from '@/components/AppHeader';
+import AppHeader from "@/components/AppHeader";
 
 //----- シャッフル関数 -----//
 function shuffle<T>(array: T[]): T[] {
@@ -45,7 +45,7 @@ export default function QuizPage() {
 
         const res = await fetch(
           `http://localhost:3001/api/quizzes/random?count=${PICK_COUNT}`,
-          { cache: 'no-store' },
+          { cache: "no-store" },
         );
 
         if (!res.ok) throw new Error(`fetch failed: ${res.status}`);
@@ -71,7 +71,7 @@ export default function QuizPage() {
 
         setQuestions(shuffle(normalized).slice(0, PICK_COUNT));
       } catch (e: any) {
-        setError(e?.message ?? 'failed');
+        setError(e?.message ?? "failed");
       } finally {
         setLoading(false);
       }
@@ -221,20 +221,20 @@ export default function QuizPage() {
               const isAnswer = quiz.correctIndex === i;
 
               const base =
-                'rounded-xl border px-3 py-3 text-sm transition active:scale-[0.99]';
-              const enabled = 'hover:bg-gray-50';
-              const disabled = 'opacity-80';
+                "rounded-xl border px-3 py-3 text-sm transition active:scale-[0.99]";
+              const enabled = "hover:bg-gray-50";
+              const disabled = "opacity-80";
 
-              let stateClass = '';
+              let stateClass = "";
 
               if (answered) {
                 if (isAnswer)
-                  stateClass = 'border-correct bg-correct/10'; // 正解は緑
+                  stateClass = "border-correct bg-correct/10"; // 正解は緑
                 else if (isSelected)
-                  stateClass = 'border-wrong bg-wrong/10'; // 間違えて選んだのは赤
-                else stateClass = 'border-gray-200 bg-white'; // その他は普通
+                  stateClass = "border-wrong bg-wrong/10"; // 間違えて選んだのは赤
+                else stateClass = "border-gray-200 bg-white"; // その他は普通
               } else {
-                stateClass = 'border-gray-200 bg-white';
+                stateClass = "border-gray-200 bg-white";
               }
 
               return (
@@ -247,7 +247,7 @@ export default function QuizPage() {
                     base,
                     stateClass,
                     answered ? disabled : enabled,
-                  ].join(' ')}
+                  ].join(" ")}
                 >
                   {label}
                 </button>
@@ -260,15 +260,15 @@ export default function QuizPage() {
         {answered ? (
           <section
             className={[
-              'mt-5 rounded-2xl bg-white p-4 border transition-colors',
-              'motion-safe:animate-[fadeUp_300ms_ease-out]',
+              "mt-5 rounded-2xl bg-white p-4 border transition-colors",
+              "motion-safe:animate-[fadeUp_300ms_ease-out]",
               isCorrect
-                ? 'border-correct/40 bg-correct/5'
-                : 'border-wrong/40 bg-wrong/5',
-            ].join(' ')}
+                ? "border-correct/40 bg-correct/5"
+                : "border-wrong/40 bg-wrong/5",
+            ].join(" ")}
           >
             <div className="text-sm font-semibold">
-              {isCorrect ? '✅ 正解！ +1 sheep 🐑' : '❌ 残念！'}
+              {isCorrect ? "✅ 正解！ +1 sheep 🐑" : "❌ 残念！"}
             </div>
             <div className="mt-2 text-sm font-medium">
               正解：{quiz.choices[quiz.correctIndex]}
