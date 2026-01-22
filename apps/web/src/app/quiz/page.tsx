@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import { useMemo, useState } from "react";
-import Image from "next/image";
-import { useRouter } from "next/navigation";
-import { quizzes } from "@/lib/quizzes";
-import AppHeader from "@/components/AppHeader";
+import { useEffect, useMemo, useState } from 'react';
+import Image from 'next/image';
+import { useRouter } from 'next/navigation';
+// import { quizzes } from "@/lib/quizzes";
+import AppHeader from '@/components/AppHeader';
 
 //----- シャッフル関数 -----//
 function shuffle<T>(array: T[]): T[] {
@@ -16,16 +16,74 @@ function shuffle<T>(array: T[]): T[] {
   return copy;
 }
 
+// APIから取ってくるための型と state を追加する
+type Quiz = {
+  id: number;
+  question: string;
+  choices: string[];
+  correctIndex: number;
+  explanation: string;
+  imageUrl?: string | null;
+  imageCredit?: string | null;
+};
+
 export default function QuizPage() {
   const router = useRouter();
 
   // ----- ランダム10問を最初に固定する -----//
   const PICK_COUNT = 10;
 
-  const [questions] = useState(() => {
-    const n = Math.min(PICK_COUNT, quizzes.length); // 問題数が10未満でも安全
-    return shuffle(quizzes).slice(0, n);
-  });
+  const [questions, setQuestions] = useState<Quiz[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const res = await fetch(
+          `http://localhost:3001/api/quizzes/random?count=${PICK_COUNT}`,
+          { cache: 'no-store' },
+        );
+
+        if (!res.ok) throw new Error(`fetch failed: ${res.status}`);
+
+        const data = await res.json();
+
+        // choices([{text, sort_order...}]) → choices(string[]) に変換
+        const normalized: Quiz[] = data.map((q: any) => {
+          const sorted = [...(q.choices ?? [])].sort(
+            (a: any, b: any) => a.sort_order - b.sort_order,
+          );
+
+          return {
+            id: q.id,
+            question: q.question,
+            choices: sorted.map((c: any) => c.text),
+            correctIndex: q.correct_index, // Quizに correct_index がある前提
+            explanation: q.explanation,
+            imageUrl: q.image_url,
+            imageCredit: q.image_credit,
+          };
+        });
+
+        setQuestions(shuffle(normalized).slice(0, PICK_COUNT));
+      } catch (e: any) {
+        setError(e?.message ?? 'failed');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    load();
+  }, []);
+
+  // const [questions] = useState(() => {
+  //   const n = Math.min(PICK_COUNT, quizzes.length); // 問題数が10未満でも安全
+  //   return shuffle(quizzes).slice(0, n);
+  // });
 
   // 今何問目？
   const [index, setIndex] = useState(0);
@@ -36,6 +94,43 @@ export default function QuizPage() {
 
   // 合計スコア（正解数）
   const [score, setScore] = useState(0);
+
+  if (loading) {
+    return (
+      <main className="min-h-screen bg-base py-5">
+        <AppHeader showConfirm />
+        <div className="mx-auto max-w-xl px-4">
+          <div className="rounded-2xl bg-white p-6 text-sm">読み込み中...</div>
+        </div>
+      </main>
+    );
+  }
+
+  if (error) {
+    return (
+      <main className="min-h-screen bg-base py-5">
+        <AppHeader showConfirm />
+        <div className="mx-auto max-w-xl px-4">
+          <div className="rounded-2xl bg-white p-6 text-sm">
+            読み込みに失敗しました: {error}
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  if (questions.length === 0) {
+    return (
+      <main className="min-h-screen bg-base py-5">
+        <AppHeader showConfirm />
+        <div className="mx-auto max-w-xl px-4">
+          <div className="rounded-2xl bg-white p-6 text-sm">
+            問題がありません（公開中クイズが0件かも）
+          </div>
+        </div>
+      </main>
+    );
+  }
 
   // total：問題数（表示に使う）
   // quiz：今表示する1問
@@ -126,20 +221,20 @@ export default function QuizPage() {
               const isAnswer = quiz.correctIndex === i;
 
               const base =
-                "rounded-xl border px-3 py-3 text-sm transition active:scale-[0.99]";
-              const enabled = "hover:bg-gray-50";
-              const disabled = "opacity-80";
+                'rounded-xl border px-3 py-3 text-sm transition active:scale-[0.99]';
+              const enabled = 'hover:bg-gray-50';
+              const disabled = 'opacity-80';
 
-              let stateClass = "";
+              let stateClass = '';
 
               if (answered) {
                 if (isAnswer)
-                  stateClass = "border-correct bg-correct/10"; // 正解は緑
+                  stateClass = 'border-correct bg-correct/10'; // 正解は緑
                 else if (isSelected)
-                  stateClass = "border-wrong bg-wrong/10"; // 間違えて選んだのは赤
-                else stateClass = "border-gray-200 bg-white"; // その他は普通
+                  stateClass = 'border-wrong bg-wrong/10'; // 間違えて選んだのは赤
+                else stateClass = 'border-gray-200 bg-white'; // その他は普通
               } else {
-                stateClass = "border-gray-200 bg-white";
+                stateClass = 'border-gray-200 bg-white';
               }
 
               return (
@@ -152,7 +247,7 @@ export default function QuizPage() {
                     base,
                     stateClass,
                     answered ? disabled : enabled,
-                  ].join(" ")}
+                  ].join(' ')}
                 >
                   {label}
                 </button>
@@ -165,15 +260,15 @@ export default function QuizPage() {
         {answered ? (
           <section
             className={[
-              "mt-5 rounded-2xl bg-white p-4 border transition-colors",
-              "motion-safe:animate-[fadeUp_300ms_ease-out]",
+              'mt-5 rounded-2xl bg-white p-4 border transition-colors',
+              'motion-safe:animate-[fadeUp_300ms_ease-out]',
               isCorrect
-                ? "border-correct/40 bg-correct/5"
-                : "border-wrong/40 bg-wrong/5",
-            ].join(" ")}
+                ? 'border-correct/40 bg-correct/5'
+                : 'border-wrong/40 bg-wrong/5',
+            ].join(' ')}
           >
             <div className="text-sm font-semibold">
-              {isCorrect ? "✅ 正解！ +1 sheep 🐑" : "❌ 残念！"}
+              {isCorrect ? '✅ 正解！ +1 sheep 🐑' : '❌ 残念！'}
             </div>
             <div className="mt-2 text-sm font-medium">
               正解：{quiz.choices[quiz.correctIndex]}
