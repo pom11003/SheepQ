@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { quizzes } from "@/lib/quizzes";
 import Link from "next/link";
+import AppHeader from "@/components/AppHeader";
 
 //----- シャッフル関数 -----//
 function shuffle<T>(array: T[]): T[] {
@@ -79,28 +80,12 @@ export default function QuizPage() {
 
   return (
     <main className="min-h-screen bg-base py-5">
-      {/* ヘッダー */}
-      <header className="mb-4 flex items-center justify-between px-4">
-        {" "}
-        {/* Homeへのリンク（確認付き） */}
-        <h1 className="text-2xl font-semibold text-accent1">
-          <Link
-            href="/"
-            onClick={(e) => {
-              if (!confirm("クイズを終了してHomeに戻りますか？")) {
-                e.preventDefault();
-              }
-            }}
-            className="hover:opacity-80 transition-opacity"
-          >
-            Sheep Q
-          </Link>
-        </h1>{" "}
-        <div className="text-lg text-hint">
-          {" "}
-          Q {index + 1} / {total}{" "}
-        </div>{" "}
-      </header>
+      <AppHeader showConfirm />
+
+      {/* クイズ画面用のサブ情報 */}
+      <div className="mb-3 px-4 text-right text-lg text-hint">
+        Q {index + 1} / {total}
+      </div>
 
       {/* 中央寄せコンテンツ */}
       <div className="mx-auto max-w-xl px-4">
