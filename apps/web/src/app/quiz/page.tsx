@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { quizzes, type Quiz } from "@/lib/quizzes";
@@ -22,7 +22,7 @@ export default function QuizPage() {
   // ----- ランダム10問を最初に固定する -----//
   const PICK_COUNT = 10;
 
-  // SSRでは空。マウント後に確定させる
+  // SSRではだ問題は1問も決まっていない状態にして、マウント後に確定させる。
   const [questions, setQuestions] = useState<Quiz[]>([]);
   // 今何問目？
   const [index, setIndex] = useState(0);
@@ -31,12 +31,23 @@ export default function QuizPage() {
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null); // 正解だった？（true/false）
   // 合計スコア（正解数）
   const [score, setScore] = useState(0);
+  const scoreRef = useRef(0);
 
+  const sheepCount = Math.min(score, 10);
+  const extra = score - sheepCount;
+
+  //--- hydrationエラー対策（シャッフルが サーバーとブラウザで別の結果になることを防ぐ） ---//
+
+  // ランダム10問を「クライアントだけで」決める。
   useEffect(() => {
     const n = Math.min(PICK_COUNT, quizzes.length);
     setQuestions(shuffle(quizzes).slice(0, n));
   }, []);
+  // ① quizzes 全体をシャッフル
+  // ② 先頭から n 問だけ切り出す
+  // ③ それを questions にセット
 
+  // 初回レンダー時：questions = [] → Loading表示
   if (questions.length === 0) {
     return (
       <main className="min-h-screen bg-base py-5">
@@ -64,28 +75,30 @@ export default function QuizPage() {
     setIsCorrect(correct);
 
     // 今の最新のスコア s を使って+1してね
-    if (correct) setScore((s) => s + 1);
+    if (correct) {
+      setScore((s) => {
+        const next = s + 1;
+        scoreRef.current = next; // ★最新スコアを確定保存
+        return next;
+      });
+    }
   };
 
   const onNext = () => {
-    // 次へ
     const nextIndex = index + 1;
 
-    // 状態リセット
-    setSelected(null);
-    setIsCorrect(null);
-
-    // まだ問題が残ってたら setIndex(nextIndex) して次の問題へ
+    // 次の問題へ行くときだけリセット
     if (nextIndex < total) {
+      setSelected(null);
+      setIsCorrect(null);
       setIndex(nextIndex);
       return;
     }
 
-    // 最後なら結果へ（score と total をURLにつけて渡したい）
-    // 念のため「今画面に出ているスコア」を使う（最終表示の値）
-    const finalScore = score;
+    console.log("score(state)=", score, "score(ref)=", scoreRef.current);
 
-    router.push(`/result?score=${finalScore}&total=${total}`);
+    // 最後なら結果へ（refが常に最新）
+    router.push(`/result?score=${scoreRef.current}&total=${total}`);
   };
 
   return (
@@ -209,9 +222,10 @@ export default function QuizPage() {
           <span>{score}</span>
           <span className="whitespace-nowrap">sheep</span>
           <span className="whitespace-nowrap">
-            {Array.from({ length: score }).map((_, i) => (
+            {Array.from({ length: sheepCount }).map((_, i) => (
               <span key={i}>🐏</span>
             ))}
+            {extra > 0 ? <span className="ml-1 text-sm">+{extra}</span> : null}
           </span>
         </div>
       </div>
