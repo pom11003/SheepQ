@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import Link from "next/link";
+import Link from 'next/link';
 
 type AppHeaderProps = {
   showConfirm?: boolean; // クイズ中だけ確認を出したい
@@ -14,7 +14,7 @@ export default function AppHeader({ showConfirm = false }: AppHeaderProps) {
           href="/"
           onClick={(e) => {
             if (showConfirm) {
-              if (!confirm("クイズを終了してHomeに戻りますか？")) {
+              if (!confirm('クイズを終了してHomeに戻りますか？')) {
                 e.preventDefault();
               }
             }

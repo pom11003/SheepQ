@@ -6,6 +6,7 @@ import AuthModal from '@/components/AuthModal';
 import { HeroCard } from '@/components/HeroCard';
 import AuthEntry from '@/components/AuthEntry';
 import AppHeader from '@/components/AppHeader';
+import AuthStatus from '@/components/AuthStatus';
 
 type Role = 'user' | 'admin';
 
@@ -147,19 +148,8 @@ export default function Home() {
 
       {/* 右上：ログイン状態表示 */}
       <div className="fixed right-4 top-4 z-20">
-        {isLoggedIn ? (
-          <div className="flex items-center gap-2 rounded-full bg-white/60 px-4 py-2 shadow backdrop-blur">
-            <span className="max-w-[220px] truncate text-xs text-hint">
-              {me?.email}（{me?.role}）
-            </span>
-            <button
-              onClick={logout}
-              type="button"
-              className="rounded-full px-3 py-1 text-sm font-medium hover:bg-black/5"
-            >
-              ログアウト
-            </button>
-          </div>
+        {me ? (
+          <AuthStatus me={me} onLogout={logout} />
         ) : (
           <AuthEntry onOpenSignup={openSignup} onOpenLogin={openLogin} />
         )}
