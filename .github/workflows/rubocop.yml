@@ -29,6 +29,11 @@ jobs:
       - name: Build api container
         run: docker compose build api
 
+      - name: Create .env for CI
+        run: |
+          echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" > .env
+          echo "JWT_EXP_HOURS=${{ secrets.JWT_EXP_HOURS }}" >> .env
+
       - name: Run RuboCop
         run: docker compose run --rm api bundle exec rubocop
         env:
