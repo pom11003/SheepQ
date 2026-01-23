@@ -1,4 +1,4 @@
-<<<<<<< Updated upstream
+
 module Admin
   class QuizzesController < ApplicationController
     #----- GET /admin/quizzes -----#
@@ -136,7 +136,7 @@ end
     # エラーJSONの統一出力
     def render_error(message:, status:, details: [])
       render json: { error: { message: message, details: details } }, status: status
-=======
+
 class Admin::QuizzesController < ApplicationController
   # GET /admin/quizzes
   def index
@@ -156,7 +156,7 @@ class Admin::QuizzesController < ApplicationController
     else
       render json: { error: quiz.errors.full_messages.join(", ") },
              status: :unprocessable_entity
->>>>>>> Stashed changes
+ Stashed changes
     end
   end
 
