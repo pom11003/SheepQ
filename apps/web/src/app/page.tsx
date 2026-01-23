@@ -73,7 +73,7 @@ export default function Home() {
 
   const afterLoginNavigate = (role: Role) => {
     // admin は管理画面へ、user は TOP に戻す
-    if (role === 'admin') router.push('/admin/quizzes');
+    if (role === 'admin') router.push('/admin');
     else router.push('/');
   };
 
