@@ -11,16 +11,13 @@
 # It's strongly recommended that you check this file into your version control system.
 
 ActiveRecord::Schema[8.1].define(version: 2026_01_22_131833) do
-  # These are extensions that must be enabled in order to support this database
-  enable_extension "pg_catalog.plpgsql"
-
   create_table "answers", force: :cascade do |t|
     t.datetime "answered_at", null: false
-    t.bigint "choice_id", null: false
+    t.integer "choice_id", null: false
     t.datetime "created_at", null: false
     t.boolean "is_correct", default: false, null: false
-    t.bigint "quiz_attempt_id", null: false
-    t.bigint "quiz_id", null: false
+    t.integer "quiz_attempt_id", null: false
+    t.integer "quiz_id", null: false
     t.datetime "updated_at", null: false
     t.index ["choice_id"], name: "index_answers_on_choice_id"
     t.index ["quiz_attempt_id", "quiz_id"], name: "index_answers_on_quiz_attempt_id_and_quiz_id", unique: true
@@ -30,11 +27,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_22_131833) do
 
   create_table "choices", force: :cascade do |t|
     t.datetime "created_at", null: false
-    t.boolean "is_correct"
-    t.bigint "quiz_id", null: false
-    t.integer "sort_order"
-    t.string "text"
+    t.boolean "is_correct", default: false, null: false
+    t.integer "quiz_id", null: false
+    t.integer "sort_order", null: false
+    t.string "text", null: false
     t.datetime "updated_at", null: false
+    t.index ["quiz_id", "sort_order"], name: "index_choices_on_quiz_id_and_sort_order", unique: true
     t.index ["quiz_id"], name: "index_choices_on_quiz_id"
   end
 
@@ -45,7 +43,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_22_131833) do
     t.datetime "started_at"
     t.integer "total_questions", default: 0, null: false
     t.datetime "updated_at", null: false
-    t.bigint "user_id", null: false
+    t.integer "user_id", null: false
     t.index ["user_id"], name: "index_quiz_attempts_on_user_id"
   end
 
@@ -59,6 +57,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_22_131833) do
     t.boolean "is_published", default: false, null: false
     t.text "question", null: false
     t.datetime "updated_at", null: false
+    t.index ["code"], name: "index_quizzes_on_code", unique: true
   end
 
   create_table "users", force: :cascade do |t|
