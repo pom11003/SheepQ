@@ -4,6 +4,7 @@ RSpec.describe "Auth login", type: :request do
   describe "POST /auth/login" do
     before do
       host! "localhost:3001" # ← これがHost Authorization対策
+      ENV["JWT_SECRET"] = "test-secret"
     end
 
     let!(:user) do
