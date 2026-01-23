@@ -1,0 +1,33 @@
+name: RuboCop
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  rubocop:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Prepare env file
+        run: cp apps/api/.env.example apps/api/.env
+
+      - name: Debug env presence
+        run: |
+          pwd
+          ls -la
+          ls -la apps/api
+          test -f apps/api/.env && echo ".env OK" || (echo ".env MISSING" && exit 1)
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build api container
+        run: docker compose build api
+
+      - name: Run RuboCop
+        run: docker compose run --rm api bundle exec rubocop

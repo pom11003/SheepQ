@@ -1,49 +1,108 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
+import Image from 'next/image';
+import { useRouter } from 'next/navigation';
+import AppHeader from '@/components/AppHeader';
 
-type Choice = {
-  id: number;
-  quiz_id: number;
-  text: string;
-  is_correct: boolean;
-  sort_order: number;
-};
+//----- シャッフル関数 -----//
+function shuffle<T>(array: T[]): T[] {
+  const copy = [...array];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
 
+// 画面で使うクイズ型（正規化後）
 type Quiz = {
   id: number;
-  image_url: string | null;
   question: string;
-  explanation: string | null;
-  is_published: boolean;
-  created_at: string;
-  updated_at: string;
-  choices: Choice[];
+  choices: string[];
+  correctIndex: number;
+  explanation: string;
+  imageUrl?: string | null;
+  imageCredit?: string | null;
 };
 
-export default function AdminQuizzesPage() {
-  const [quizzes, setQuizzes] = useState<Quiz[]>([]);
+// APIレスポンス（Rails側のsnake_case想定）
+type ApiChoice = {
+  sort_order: number;
+  text: string;
+};
+
+type ApiQuiz = {
+  id: number;
+  question: string;
+  choices: ApiChoice[];
+  correct_index: number;
+  explanation: string;
+  image_url?: string | null;
+  image_credit?: string | null;
+};
+
+export default function QuizPage() {
+  const router = useRouter();
+
+  // ----- ランダム10問を最初に固定する -----//
+  const PICK_COUNT = 10;
+
+  // ✅ Hooksは「returnの前」に全部置く
+  const [questions, setQuestions] = useState<Quiz[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [error, setError] = useState<string | null>(null);
+
+  // 今何問目？
+  const [index, setIndex] = useState(0);
+  // 回答状態
+  const [selected, setSelected] = useState<number | null>(null);
+  const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
+  // 合計スコア（正解数）
+  const [score, setScore] = useState(0);
 
   useEffect(() => {
     const load = async () => {
       try {
         setLoading(true);
-        setError("");
+        setError(null);
 
-        const res = await fetch("http://localhost:3001/admin/quizzes", {
-          cache: "no-store",
+        const res = await fetch(
+          `http://localhost:3001/api/quizzes/random?count=${PICK_COUNT}`,
+          { cache: 'no-store' },
+        );
+
+        if (!res.ok) throw new Error(`fetch failed: ${res.status}`);
+
+        const data = (await res.json()) as ApiQuiz[];
+
+        const normalized: Quiz[] = data.map((q) => {
+          const sorted = [...(q.choices ?? [])].sort(
+            (a, b) => a.sort_order - b.sort_order,
+          );
+
+          return {
+            id: q.id,
+            question: q.question,
+            choices: sorted.map((c) => c.text),
+            correctIndex: q.correct_index,
+            explanation: q.explanation,
+            imageUrl: q.image_url ?? null,
+            imageCredit: q.image_credit ?? null,
+          };
         });
 
-        if (!res.ok) {
-          throw new Error(`API error: ${res.status}`);
-        }
+        const picked = shuffle(normalized).slice(0, PICK_COUNT);
 
-        const data = (await res.json()) as Quiz[];
-        setQuizzes(data);
-      } catch (e) {
-        setError(e instanceof Error ? e.message : String(e));
+        setQuestions(picked);
+
+        // 新しく問題を読み込んだらプレイ状態を初期化
+        setIndex(0);
+        setSelected(null);
+        setIsCorrect(null);
+        setScore(0);
+      } catch (e: unknown) {
+        setError(e instanceof Error ? e.message : 'failed');
       } finally {
         setLoading(false);
       }
@@ -52,55 +111,218 @@ export default function AdminQuizzesPage() {
     load();
   }, []);
 
-  if (loading) return <div className="p-6">読み込み中...</div>;
-  if (error) return <div className="p-6 text-red-600">エラー: {error}</div>;
+  // ✅ 以降は「計算だけ」(Hookなし)
+
+  // ・total：問題数（表示に使う）
+  // ・quiz：今表示する1問
+  const total = questions.length;
+  const quiz = total > 0 ? questions[index] : null;
+  // 「回答済みか」を判定
+  const answered = selected !== null;
+
+  // onChoose :ユーザーが1つの選択肢を押した瞬間に起こる一連の処理
+  const onChoose = (choiceIndex: number) => {
+    if (!quiz) return;
+    if (answered) return; // 連打防止
+
+    setSelected(choiceIndex); // 「どれを選んだか」を記録
+
+    // 正解か判定
+    const correct = choiceIndex === quiz.correctIndex;
+    setIsCorrect(correct);
+
+    // 今の最新のスコア s を使って+1してね
+    if (correct) setScore((s) => s + 1);
+  };
+
+  // 次へボタン
+  const onNext = () => {
+    const nextIndex = index + 1;
+
+    // 状態リセット
+    setSelected(null);
+    setIsCorrect(null);
+
+    // まだ問題が残ってたら setIndex(nextIndex) して次の問題へ
+    if (nextIndex < total) {
+      setIndex(nextIndex);
+      return;
+    }
+
+    // 最後なら結果へ（score と total をURLにつけて渡したい）
+    router.push(`/result?score=${score}&total=${total}`);
+  };
+
+  // ✅ ここから下は return 分岐してOK（Hookはもう呼ばれてる）
+  if (loading) {
+    return (
+      <main className="min-h-screen bg-base py-5">
+        <AppHeader showConfirm />
+
+        <div className="mx-auto max-w-xl px-4">
+          <div className="rounded-2xl bg-white p-6 text-sm">読み込み中...</div>
+        </div>
+      </main>
+    );
+  }
+
+  if (error) {
+    return (
+      <main className="min-h-screen bg-base py-5">
+        <AppHeader showConfirm />
+        <div className="mx-auto max-w-xl px-4">
+          <div className="rounded-2xl bg-white p-6 text-sm">
+            読み込みに失敗しました: {error}
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  if (!quiz) {
+    return (
+      <main className="min-h-screen bg-base py-5">
+        <AppHeader showConfirm />
+        <div className="mx-auto max-w-xl px-4">
+          <div className="rounded-2xl bg-white p-6 text-sm">
+            問題がありません（公開中クイズが0件かもしれません）
+          </div>
+        </div>
+      </main>
+    );
+  }
 
   return (
-    <main className="p-6 space-y-4">
-      <h1 className="text-xl font-bold">クイズ一覧（管理）</h1>
+    <main className="min-h-screen bg-base">
+      <AppHeader showConfirm />
 
-      {quizzes.length === 0 ? (
-        <p>クイズがありません</p>
-      ) : (
-        <ul className="space-y-3">
-          {quizzes.map((q) => (
-            <li key={q.id} className="rounded border p-4">
-              <div className="flex items-center justify-between gap-4">
-                <div className="font-semibold">
-                  #{q.id} {q.question}
+      {/* 中央寄せコンテンツ */}
+      <div className="mx-auto max-w-xl px-4">
+        {/* 画像（画像がある時だけ表示） */}
+        {quiz.imageUrl ? (
+          <div className="mb-4 relative">
+            {/* Q表示：写真の右上・外側 */}
+            <div className="absolute -top-6 right-0 text-sm text-hint">
+              Q {index + 1} / {total}
+            </div>
+
+            {/* 表示枠：サイズと比率を固定 */}
+            <div className="relative w-full overflow-hidden rounded-2xl bg-gray-50 shadow-sm aspect-[4/3]">
+              <Image
+                src={quiz.imageUrl}
+                alt="quiz"
+                fill
+                priority
+                sizes="(max-width: 640px) 100vw, 640px"
+                className="object-cover object-center"
+              />
+
+              {/* 右下にクレジット */}
+              {quiz.imageCredit && (
+                <div className="absolute bottom-1 right-2 rounded bg-black/50 px-1 text-[10px] text-white">
+                  {quiz.imageCredit}
                 </div>
-
-                {/* 🔽 Tailwindが確実に効く書き方 */}
-                <span
-                  className={[
-                    "text-xs px-2 py-1 rounded border",
-                    q.is_published ? "bg-green-50" : "bg-zinc-50",
-                  ].join(" ")}
-                >
-                  {q.is_published ? "公開" : "非公開"}
-                </span>
-              </div>
-
-              <ol className="mt-3 list-decimal pl-6 space-y-1">
-                {q.choices
-                  .slice()
-                  .sort((a, b) => a.sort_order - b.sort_order)
-                  .map((c) => (
-                    <li key={c.id}>
-                      {c.text} {c.is_correct ? "✅" : ""}
-                    </li>
-                  ))}
-              </ol>
-
-              {q.explanation && (
-                <p className="mt-3 text-sm text-zinc-600">
-                  解説: {q.explanation}
-                </p>
               )}
-            </li>
-          ))}
-        </ul>
-      )}
+            </div>
+          </div>
+        ) : (
+          <div className="mb-4 relative">
+            <div className="absolute -top-6 right-0 text-sm text-hint">
+              Q {index + 1} / {total}
+            </div>
+          </div>
+        )}
+
+        {/* 問題 */}
+        <h2 className="mb-4 text-lg font-medium">Q. {quiz.question}</h2>
+
+        {/* 回答エリア（選択肢カード） */}
+        <section className="mt-3 rounded-2xl p-4">
+          <div className="grid grid-cols-2 gap-3">
+            {quiz.choices.map((label, i) => {
+              const isSelected = selected === i;
+              const isAnswer = quiz.correctIndex === i;
+
+              const base =
+                'rounded-xl border px-3 py-3 text-sm transition active:scale-[0.99]';
+              const enabled = 'hover:bg-gray-50';
+              const disabled = 'opacity-80';
+
+              let stateClass = '';
+              if (answered) {
+                if (isAnswer) stateClass = 'border-correct bg-correct/10';
+                else if (isSelected) stateClass = 'border-wrong bg-wrong/10';
+                else stateClass = 'border-gray-200 bg-white';
+              } else {
+                stateClass = 'border-gray-200 bg-white';
+              }
+
+              return (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => onChoose(i)}
+                  disabled={answered}
+                  className={[
+                    base,
+                    stateClass,
+                    answered ? disabled : enabled,
+                  ].join(' ')}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* 回答後エリア（解説エリアは回答後だけ表示） */}
+        {answered ? (
+          <section
+            className={[
+              'mt-5 rounded-2xl bg-white p-4 border transition-colors',
+              'motion-safe:animate-[fadeUp_300ms_ease-out]',
+              isCorrect
+                ? 'border-correct/40 bg-correct/5'
+                : 'border-wrong/40 bg-wrong/5',
+            ].join(' ')}
+          >
+            <div className="text-sm font-semibold">
+              {isCorrect ? '✅ 正解！ +1 sheep 🐑' : '❌ 残念！'}
+            </div>
+            <div className="mt-2 text-sm font-medium">
+              正解：{quiz.choices[quiz.correctIndex]}
+            </div>
+            <p className="mt-2 whitespace-pre-line text-sm text-gray-600">
+              {quiz.explanation}
+            </p>
+
+            <div className="mt-4 flex items-center justify-end">
+              <button
+                type="button"
+                onClick={onNext}
+                className="rounded-sm bg-accent1 px-6 py-2 font-medium text-sm text-white hover:opacity-90"
+              >
+                次へ
+              </button>
+            </div>
+          </section>
+        ) : null}
+      </div>
+
+      {/* 画面下固定のスコアバー */}
+      <div className="fixed bottom-4 left-1/2 z-10 -translate-x-1/2">
+        <div className="flex items-center gap-2 px-6 py-4 rounded-full bg-white/50 shadow text-lg font-bold text-accent1">
+          <span>Score:</span>
+          <span>{score}</span>
+          <span className="whitespace-nowrap">sheep</span>
+          <span className="whitespace-nowrap">
+            {Array.from({ length: score }).map((_, i) => (
+              <span key={i}>🐏</span>
+            ))}
+          </span>
+        </div>
+      </div>
     </main>
   );
 }

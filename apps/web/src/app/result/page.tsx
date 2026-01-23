@@ -1,80 +1,90 @@
-type ResultProps = {
-  score: number; // 正解数
-  total: number; // 全問題数
+import AppHeader from "@/components/AppHeader";
+import Link from "next/link";
+
+type PageProps = {
+  searchParams?: Promise<{
+    score?: string;
+    total?: string;
+  }>;
 };
 
-export default function Result({ score, total }: ResultProps) {
+export default async function ResultPage({ searchParams }: PageProps) {
+  const sp = (await searchParams) ?? {};
+  const score = Number(sp.score ?? 0);
+  const total = Number(sp.total ?? 0);
+
+  const safeScore = Number.isFinite(score) ? score : 0;
+  const safeTotal = Number.isFinite(total) ? total : 0;
+
+  const rate = safeTotal > 0 ? Math.round((safeScore / safeTotal) * 100) : 0;
+
+  const message =
+    safeTotal === 0
+      ? "結果を受け取れませんでした… 🐑"
+      : rate === 100
+        ? "もう完全に羊ですね 🐏🏆"
+        : rate >= 70
+          ? "もう半分、羊ですね 🐏✨"
+          : rate >= 40
+            ? "羊と人間のハーフくらい 🐑"
+            : "まずはメェーから覚えよう 🐏📚";
+
   return (
-    <div className="text-center mt-16">
-      <h1 className="text-3xl font-bold mb-4">Result</h1>
+    <main className="min-h-screen bg-base">
+      <AppHeader />
 
-      <p className="text-xl mb-4">
-        あなたは {score} / {total} 匹ゲット！
-      </p>
+      <div className="mx-auto max-w-xl px-4">
+        <section className="mt-6 rounded-2xl bg-white p-6 sm:p-7 text-center shadow-sm">
+          {/* タイトル（カード内に入れて統一） */}
+          <div className="space-y-2">
+            <h2 className="text-2xl font-semibold tracking-tight text-accent1">
+              結果
+            </h2>
+            <p className="text-sm text-hint">今回のスコアはこちらです 🐏</p>
+          </div>
 
-      {/*----- 🐏をスコア分だけ並べる -----*/}
-      {/* ① score = 5 のとき、長さ5の配列を作る [ _, _, _, _, _ ] */}
-      {/* ② それを map で回して、<span>🐏</span>を5回表示している。 */}
-      <div className="text-3xl mb-6">
-        {Array.from({ length: score }).map((_, i) => (
-          <span key={i}>🐏</span>
-        ))}
+          <div className="mt-5 h-px w-full bg-black/5" />
+
+          {/* 評価メッセージ */}
+          <p className="mt-3 py-8 text-lg font-bold leading-relaxed">
+            {message}
+          </p>
+
+          {/* スコア */}
+          <p className="my-5-5 text-hint font-semibold">
+            あなたは{" "}
+            <span className="text-accent1 text-3xl font-bold tabular-nums">
+              {safeScore}
+            </span>{" "}
+            <span className="text-hint">/ {safeTotal}</span> 匹ゲット！
+          </p>
+
+          <p className="mt-2 text-sm text-gray-500">正答率：{rate}%</p>
+
+          {/* 羊 */}
+          <div className="mt-10 text-3xl leading-relaxed">
+            {Array.from({ length: safeScore }).map((_, i) => (
+              <span key={i}>🐏</span>
+            ))}
+          </div>
+
+          <div className="mt-5 pb-10 mx-10 grid gap-3">
+            <Link
+              href="/quiz"
+              className="rounded-2xl bg-accent1 mt-10 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:opacity-90 active:scale-[0.99]"
+            >
+              もう1回やる
+            </Link>
+
+            <Link
+              href="/"
+              className="rounded-2xl border border-gray-200 shadow-sm bg-white px-6 py-3 text-sm font-semibold hover:bg-gray-50 active:scale-[0.99]"
+            >
+              TOPへ戻る
+            </Link>
+          </div>
+        </section>
       </div>
-
-      <button className="px-4 py-2 border rounded">もう一回やる</button>
-    </div>
+    </main>
   );
 }
-
-// "use client";
-
-// import { useSearchParams, useRouter } from "next/navigation";
-
-// export default function ResultPage() {
-//     const searchParams = useSearchParams();
-//     const router = useRouter();
-
-//     const correct = Number(searchParams.get("correct") ?? 0);
-
-//     // ✅ 正解数に応じた羊コメント
-//     const comment =
-//         correct === 5
-//             ? "🐑 完璧メェ〜！あなたはひつじ博士！"
-//             : correct >= 3
-//                 ? "🐑 なかなかやるね！もふもふ上級者！"
-//                 : correct >= 1
-//                     ? "🐑 おしいメェ…！次はもっといける！"
-//                     : "🐑 メェ…0点！？でも挑戦しただけでえらい！";
-
-//     return (
-//         <div style={{ padding: 20 }}>
-//             <h1>🐑 羊クイズの結果発表！</h1>
-
-//             <p>
-//                 正解数：<strong>{correct}</strong> / 5 問
-//             </p>
-
-//             {/* ✅ コメント表示 */}
-//             <p style={{ marginTop: 12, fontWeight: "bold" }}>{comment}</p>
-
-//             {/* 羊イラスト用スペース（必要なら残す） */}
-//             <div
-//                 style={{
-//                     width: 160,
-//                     height: 160,
-//                     border: "2px dashed #ccc",
-//                     borderRadius: 12,
-//                     margin: "16px auto",
-//                     display: "flex",
-//                     alignItems: "center",
-//                     justifyContent: "center",
-//                     color: "#999",
-//                 }}
-//             >
-//                 羊イラスト予定
-//             </div>
-
-//             <button onClick={() => router.push("/quiz")}>もう一度挑戦</button>
-//         </div>
-//     );
-// }
