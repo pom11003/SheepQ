@@ -58,6 +58,7 @@ export default function AdminQuizzesPage() {
     [choices],
   );
 
+  //----- 一覧取得 -----//
   const load = async () => {
     try {
       setError('');
@@ -65,13 +66,15 @@ export default function AdminQuizzesPage() {
         cache: 'no-store',
       });
       if (!res.ok) throw new Error(`GET failed: ${res.status}`);
-      const data = (await res.json()) as Quiz[];
-      setQuizzes(data);
+      // json形式統一
+      const json = (await res.json()) as { data: Quiz[] };
+      setQuizzes(json.data);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'unknown error');
     }
   };
 
+  //----- 公開・非公開 -----//
   const togglePublish = async (id: number, next: boolean) => {
     setError('');
     try {
@@ -86,8 +89,32 @@ export default function AdminQuizzesPage() {
         throw new Error(`PATCH failed: ${res.status}\n${text}`);
       }
 
-      const updated = (await res.json()) as Quiz;
+      // json形式統一
+      const json = (await res.json()) as { data: Quiz };
+      const updated = json.data;
       setQuizzes((prev) => prev.map((q) => (q.id === id ? updated : q)));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'unknown error');
+    }
+  };
+
+  //----- 削除 -----//
+  const deleteQuiz = async (id: number) => {
+    if (!confirm('このクイズを削除しますか？')) return;
+
+    setError('');
+    try {
+      const res = await fetch(`${API_BASE}/admin/quizzes/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`DELETE failed: ${res.status}\n${text}`);
+      }
+
+      // 成功したら一覧から削除
+      setQuizzes((prev) => prev.filter((q) => q.id !== id));
     } catch (e) {
       setError(e instanceof Error ? e.message : 'unknown error');
     }
@@ -128,6 +155,7 @@ export default function AdminQuizzesPage() {
     ]);
   };
 
+  //----- 作成 -----//
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
@@ -167,7 +195,9 @@ export default function AdminQuizzesPage() {
         throw new Error(`POST failed: ${res.status}\n${text}`);
       }
 
-      const created = (await res.json()) as Quiz;
+      // json形式統一
+      const json = (await res.json()) as { data: Quiz };
+      const created = json.data;
       setQuizzes((prev) => [created, ...prev]);
       resetForm();
 
@@ -226,7 +256,6 @@ export default function AdminQuizzesPage() {
         {/* コンテンツ */}
         <div className="mx-auto mt-10 max-w-5xl">
           {/* タブ */}
-          {/* インデックス風タブ（カードと一体化） */}
           <div className="inline-flex overflow-hidden rounded-t-3xl bg-white ">
             <button
               type="button"
@@ -517,6 +546,25 @@ export default function AdminQuizzesPage() {
                             className="rounded-2xl border border-gray-200 bg-white px-3 py-2 text-sm hover:bg-gray-50"
                           >
                             {q.is_published ? '非公開にする' : '公開にする'}
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => deleteQuiz(q.id)}
+                            disabled={q.is_published} // ★公開中は削除できない（事故防止）
+                            className={[
+                              'rounded-2xl border px-3 py-2 text-sm font-semibold transition',
+                              q.is_published
+                                ? 'cursor-not-allowed border-gray-200 bg-gray-100 text-gray-400'
+                                : 'border-wrong/30 bg-wrong/10 text-wrong hover:bg-wrong/15',
+                            ].join(' ')}
+                            title={
+                              q.is_published
+                                ? '公開中は削除できません（先に非公開にしてね）'
+                                : 'このクイズを削除'
+                            }
+                          >
+                            削除
                           </button>
                         </div>
                       </div>
