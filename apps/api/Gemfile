@@ -57,4 +57,7 @@ group :development, :test do
 
   # RailsでCORSを許可する
   gem "rack-cors"
+
+  # RSpecテスト用
+  gem "rspec-rails"
 end
