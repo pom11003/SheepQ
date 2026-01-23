@@ -1,8 +1,5 @@
 import { render, screen } from '@testing-library/react';
-
-function Hello({ name }: { name: string }) {
-  return <h1>こんにちは、{name}</h1>;
-}
+import { Hello } from '../Hello';
 
 describe('Hello', () => {
   it('名前を表示できる', () => {

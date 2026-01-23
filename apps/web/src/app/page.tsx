@@ -10,9 +10,9 @@ import AppHeader from '@/components/AppHeader';
 type Role = 'user' | 'admin';
 
 type LoginResponse = {
-  message: string;
-  token: string;
-  user: { id: number; email: string; role: Role };
+  token?: string;
+  user?: { id: number; email: string; role: Role };
+  message?: string;
 };
 
 const API_BASE =
@@ -122,8 +122,8 @@ export default function Home() {
 
       const data = (await res.json().catch(() => null)) as LoginResponse | null;
 
-      if (!res.ok || !data?.token) {
-        setErrorMsg((data as any)?.message ?? 'ログインに失敗しました');
+      if (!res.ok || !data?.token || !data?.user) {
+        setErrorMsg(data?.message ?? 'ログインに失敗しました');
         return;
       }
 

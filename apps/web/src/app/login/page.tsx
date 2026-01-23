@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 type Role = 'user' | 'admin';
 
 type LoginResponse = {
-  message: string;
+  message?: string;
   token?: string;
   user?: { id: number; email: string; role: Role };
 };
@@ -45,7 +45,7 @@ export default function LoginPage() {
       const data = (await res.json().catch(() => null)) as LoginResponse | null;
 
       if (!res.ok || !data?.token || !data?.user) {
-        setErrorMsg((data as any)?.message ?? 'ログインに失敗しました');
+        setErrorMsg(data?.message ?? 'ログインに失敗しました');
         return;
       }
 
