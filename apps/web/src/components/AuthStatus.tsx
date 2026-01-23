@@ -11,7 +11,7 @@ export default function AuthStatus({ me, onLogout }: AuthStatusProps) {
   const router = useRouter();
 
   return (
-    <div className="flex items-center gap-2 rounded-full bg-white/60 px-4 py-2 shadow backdrop-blur">
+    <div className="flex items-center gap-2 rounded-full bg-white/60 px-4 py-2 my-5 shadow backdrop-blur">
       {me.role === 'admin' && (
         <button
           onClick={() => router.push('/admin')}
