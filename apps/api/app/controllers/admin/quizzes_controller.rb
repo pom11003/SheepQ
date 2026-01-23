@@ -16,20 +16,19 @@
 # Admin という「箱（名前空間）」の中にQuizzesController というクラスを作る
 module Admin
   class QuizzesController < ApplicationController
-
     #----- GET /admin/quizzes -----#
     def index
       quizzes = Quiz.includes(:choices).order(created_at: :desc) # quizzes という箱に「クイズ一覧＋各クイズの選択肢」を入れる
       render json: { data: quizzes.as_json(include: :choices) } # JSON に変換して{ data: ... } という形でフロントに返す
     end
-    # includes(:choices) 
+    # includes(:choices)
     # ・クイズ一覧を取るSQL（1回）
     # ・choicesをまとめて取るSQL（1回）
     # → 2回で済むように動く。
 
     #----- POST /admin/quizzes -----#
     def create
-      q = quiz_create_params 
+      q = quiz_create_params
       choices_param = q[:choices] || []
       # q は「問題文・解説・choices など全部入った箱」
       # quiz_create_params は「受け取っていいデータだけ」を集める関数
@@ -59,7 +58,6 @@ module Admin
 
       # ここからここまでの処理は、途中で失敗したら全部なかったことにする
       ActiveRecord::Base.transaction do
-
         #----- クイズ本体を作る -----#
         # ・新しい Quiz を1つ作る
         # ・まだDBには保存していない（メモリ上だけ）
@@ -95,7 +93,7 @@ module Admin
 
       # 「作成に成功したので、作ったデータをJSONで返すよ」そしてHTTPステータスは 201 Created にするよ
       render json: { data: quiz.as_json(include: :choices) }, status: :created
-    rescue ActiveRecord::RecordInvalid => # e もし save! が失敗して例外が起きたら、ここで受け止める
+    rescue ActiveRecord::RecordInvalid => e # もし save! が失敗して例外が起きたら、ここで受け止める
       render_error(
         message: "Validation failed",
         details: e.record.errors.full_messages, # バリデーションエラーの文章一覧を配列で取る
@@ -112,10 +110,10 @@ def update
 
   # choices を送ってきた時だけ、編集として扱う（公開切替だけPATCHにも対応）
   updating_choices = q.key?(:choices)
-   # 今回の更新リクエストに choices というキーがある？
-   # ある → 選択肢も編集する
-   # ない → 問題文や公開フラグだけ編集する
-   # 公開フラグだけ変えたい、問題文だけ直したい時に、choicesを毎回送らなくていい
+  # 今回の更新リクエストに choices というキーがある？
+  # ある → 選択肢も編集する
+  # ない → 問題文や公開フラグだけ編集する
+  # 公開フラグだけ変えたい、問題文だけ直したい時に、choicesを毎回送らなくていい
 
   if updating_choices
     if choices_param.length != 4
@@ -132,7 +130,6 @@ def update
   end
 
   ActiveRecord::Base.transaction do
-
     # クイズ本体は「来た項目だけ」上書きしたい
     quiz.assign_attributes(
       question: q[:question] ? q[:question] : quiz.question,
