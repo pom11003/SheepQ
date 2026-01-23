@@ -60,6 +60,5 @@ group :development, :test do
 
   # RSpecテスト用
   gem "rspec-rails"
-  gem 'simplecov', require: false
-
+  gem "simplecov", require: false
 end
