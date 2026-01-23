@@ -119,3 +119,17 @@ npm run lint
 # バックエンド
 docker compose exec api bundle exec rubocop
 ```
+
+## API テスト（RSpec）
+
+本プロジェクトの Rails API では、RSpec の request spec を用いて
+エンドポイントの動作確認を行います。
+
+### 実行方法
+
+```sh
+docker compose exec api bundle exec rspec
+```
+
+特定のテストだけ実行したい場合：
+docker compose exec api bundle exec rspec spec/requests/auth_login_spec.rb
