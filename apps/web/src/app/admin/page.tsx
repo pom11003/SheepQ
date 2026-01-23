@@ -602,18 +602,18 @@ export default function AdminQuizzesPage() {
                         <div className="flex shrink-0 flex-col items-end gap-2">
                           <button
                             type="button"
-                            onClick={() => startEdit(q)}
-                            className="rounded-2xl border border-gray-200 bg-white px-3 py-2 text-sm hover:bg-gray-50"
-                          >
-                            編集
-                          </button>
-
-                          <button
-                            type="button"
                             onClick={() => togglePublish(q.id, !q.is_published)}
                             className="rounded-2xl border border-gray-200 bg-white px-3 py-2 text-sm hover:bg-gray-50"
                           >
                             {q.is_published ? '非公開にする' : '公開にする'}
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => startEdit(q)}
+                            className="rounded-2xl border border-gray-200 bg-white px-3 py-2 text-sm hover:bg-gray-50"
+                          >
+                            編集
                           </button>
 
                           <button

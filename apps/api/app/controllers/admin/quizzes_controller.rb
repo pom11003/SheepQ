@@ -5,11 +5,11 @@ module Admin
       quizzes = Quiz.includes(:choices).order(created_at: :desc)
       render json: { data: quizzes.as_json(include: :choices) }
     end
-    # ・N+1問題（クイズごとにchoicesを取りに行って遅くなる）を避けるため、まとめてchoicesも読み込む。
-    # ・order(created_at: :desc)　…新しいクイズが上にくるように並べる。
-    # ・render json: { data: ... }　…レスポンス形式を統一して、フロントが扱いやすい形に。
+# ・N+1問題（クイズごとにchoicesを取りに行って遅くなる）を避けるため、まとめてchoicesも読み込む。
+# ・order(created_at: :desc)　…新しいクイズが上にくるように並べる。
+# ・render json: { data: ... }　…レスポンス形式を統一して、フロントが扱いやすい形に。
 
-    #----- POST /admin/quizzes ------#
+#----- POST /admin/quizzes ------#
 def create
   q = quiz_create_params
   choices_param = q[:choices] || []
@@ -87,21 +87,21 @@ end
     def destroy
       quiz = Quiz.find(params[:id])
       quiz.destroy!
-      
+
       render json: { data: { id: quiz.id } }
     rescue ActiveRecord::RecordNotFound
       render_error(message: "Not Found", status: :not_found)
     rescue ActiveRecord::RecordInvalid => e
-      render_error(message: "Delete failed", details: [e.message], status: :unprocessable_entity)
+      render_error(message: "Delete failed", details: [ e.message ], status: :unprocessable_entity)
     end
 
-    
+
 
     # --------------------#
     #   ここから private
     # --------------------#
 
-    private 
+    private
 
     # --- Strong Parameters（create用） ---
     def quiz_create_params
@@ -111,7 +111,7 @@ end
         :image_url,
         :image_credit,
         :is_published,
-        choices: [:text, :is_correct, :sort_order]
+        choices: [ :text, :is_correct, :sort_order ]
       )
     end
 
@@ -183,7 +183,7 @@ end
 #     # PATCH /admin/quizzes/:id
 #     def update
 #       quiz = Quiz.find(params[:id])
-      
+
 #       if quiz.update(quiz_update_params)
 #         render json: quiz.as_json(include: :choices)
 #       else

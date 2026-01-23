@@ -21,7 +21,7 @@ Rails.application.routes.draw do
 
   # 管理画面用（問題登録・一覧など）
   namespace :admin do
-  resources :quizzes, only: [:index, :create, :update, :destroy]
+  resources :quizzes, only: [ :index, :create, :update, :destroy ]
 end
 
 
