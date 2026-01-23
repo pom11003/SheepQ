@@ -60,7 +60,7 @@ module Admin
       )
     end
 
-    #----- PATCH /admin/quizzes/:id -----#
+#----- PATCH /admin/quizzes/:id -----#
 def update
   quiz = Quiz.includes(:choices).find(params[:id])
   q = quiz_update_params
@@ -152,7 +152,7 @@ end
     :image_url,
     :image_credit,
     :is_published,
-    choices: [:text, :is_correct, :sort_order]
+    choices: [ :text, :is_correct, :sort_order ]
   )
 end
 
