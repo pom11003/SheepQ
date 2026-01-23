@@ -31,3 +31,6 @@ jobs:
 
       - name: Run RuboCop
         run: docker compose run --rm api bundle exec rubocop
+        env:
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          JWT_EXP_HOURS: ${{ secrets.JWT_EXP_HOURS }}
