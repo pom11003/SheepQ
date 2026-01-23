@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 module Admin
   class QuizzesController < ApplicationController
     #----- GET /admin/quizzes -----#
@@ -135,7 +136,57 @@ end
     # エラーJSONの統一出力
     def render_error(message:, status:, details: [])
       render json: { error: { message: message, details: details } }, status: status
+=======
+class Admin::QuizzesController < ApplicationController
+  # GET /admin/quizzes
+  def index
+    quizzes = Quiz
+      .includes(:choices)
+      .order(created_at: :desc)
+
+    render json: quizzes.as_json(include: :choices)
+  end
+
+  # POST /admin/quizzes
+  def create
+    quiz = Quiz.new(quiz_params)
+
+    if quiz.save
+      render json: quiz.as_json(include: :choices), status: :created
+    else
+      render json: { error: quiz.errors.full_messages.join(", ") },
+             status: :unprocessable_entity
+>>>>>>> Stashed changes
     end
+  end
+
+  # PATCH /admin/quizzes/:id
+  def update
+    quiz = Quiz.find(params[:id])
+
+    if quiz.update(update_params)
+      render json: quiz.as_json(include: :choices), status: :ok
+    else
+      render json: { error: quiz.errors.full_messages.join(", ") },
+             status: :unprocessable_entity
+    end
+  end
+
+  private
+
+  def quiz_params
+    params.require(:quiz).permit(
+      :question,
+      :image_url,
+      :explanation,
+      :is_published,
+      choices: [:text, :is_correct, :sort_order]
+    )
+  end
+
+  def update_params
+    # 公開 / 非公開切り替え用（フロント触らずOK）
+    params.permit(:is_published)
   end
 end
 
