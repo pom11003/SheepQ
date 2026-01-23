@@ -86,7 +86,7 @@ module Admin
     rescue ActiveRecord::RecordNotFound
       render_error(message: "Not Found", status: :not_found)
     rescue ActiveRecord::RecordInvalid => e
-      render_error(message: "Delete failed", details: [e.message], status: :unprocessable_entity)
+      render_error(message: "Delete failed", details: [ e.message ], status: :unprocessable_entity)
     end
 
     private
