@@ -1,213 +1,194 @@
-# TeamA ひつじの挑戦状 -SheepQ-
+# 🐏 SheepQ（ひつじの挑戦状）
 
-ひつじのクイズアプリ 🐏<br>
-（フロント：Next.js / バックエンド：Rails API / 認証：JWT）
+> 羊に関する知識をクイズ形式で楽しく学べるWebアプリ
 
-<br>
+## 📌 概要
 
-## 開発環境セットアップ
+SheepQは、羊に関する知識をクイズ形式で学べるアプリです。
 
-### 前提
+シンプルで直感的な操作で、誰でも迷わず最後まで楽しめる体験を目指して開発しました。
 
-- Docker / Docker Compose が利用できること
-- Node.js（フロント用）
-- 使用ポート
-  - フロントエンド: http://localhost:3000
-  - バックエンドAPI: http://localhost:3001
+クイズの進行や正誤判定を状態遷移として設計し、
+
+**学習体験と使いやすさの両立**を意識しています。
 
 <br>
 
-## 起動方法（開発環境）
+## 📸 デモ
 
-### 1. API / DB を Docker で起動
+### HOME
 
-```bash
-docker compose build --no-cache
-docker compose up -d
-```
+アプリのトップ画面。クイズへの導線とログイン導線をシンプルに配置しています。
 
-### 2. データベース初期化（初回のみ）
+![home](./docs/images/SheepQ_home.png)
 
-```bash
-docker compose exec api bin/rails db:create
-docker compose exec api bin/rails db:migrate
-```
+---
 
-### 3. フロントエンドをローカルで起動
+### ログイン
 
-```bash
-cd apps/web
-npm install
-npm run dev
-```
+モーダル形式でログイン・新規登録が可能。画面遷移なしで操作できます。
 
-### アクセス先
+![login](./docs/images/SheepQ_login.png)
 
-- フロントエンド<br>
-  http://localhost:3000
+---
 
-- 管理画面<br>
-  http://localhost:3000/admin
+### クイズ出題
 
-- バックエンドAPI<br>
-  http://localhost:3001
+羊の画像とともに問題が表示され、直感的にクイズに取り組めます。
 
-### ログイン方法
+![quiz-question](./docs/images/SheepQ_quiz.png)
 
-- TOPページ（/）右上の「ログイン」ボタンを押すと、
-  モーダル形式でログイン画面が表示されます。
+---
 
-- 管理画面（/admin）へのアクセスには 管理者権限のあるユーザーでのログインが必要です。
+### 回答・フィードバック
 
-<br>
+選択後すぐに正誤判定と解説を表示し、理解を深められる設計にしています。
 
-## 認証（JWT）について
+![quiz-answer](./docs/images/SheepQ_answer.png)
 
-本プロジェクトでは JWT（JSON Web Token）認証を使用しています。
+---
 
-### JWT_SECRET の設定（必須）
+### 結果画面
 
-JWT_SECRET は自動生成されるものではなく、各環境で自分で設定する必要があります。
+スコアと正答率を表示し、達成感と振り返りを促します。
 
-ローカルでは、以下のコマンドで生成した値を使用してください。
+![quiz-result](./docs/images/SheepQ_result.png)
 
-```bash
-docker compose exec api bin/rails secret
-```
+---
 
-生成されたランダム文字列を、プロジェクト直下の .env に設定します。
+### 管理画面（クイズ一覧）
 
-### .env の例（プロジェクト直下）
+作成したクイズの一覧確認・公開/非公開・編集・削除が可能です。
 
-```bash
-JWT_SECRET=ここに生成した長い文字列
-JWT_EXP_HOURS=24
-```
+![admin-list](./docs/images/SheepQ_admin01.png)
 
-- .env は git管理しません（.gitignore に含める）
-- JWT_EXP_HOURS はトークンの有効期限（時間単位、デフォルト24時間）
+---
+
+### 管理画面（クイズ作成）
+
+問題文・解説・画像などを入力し、新しいクイズを作成できます。
+
+![admin-create](./docs/images/SheepQ_admin02.png)
 
 <br>
 
-## 開発フロー
+## 🎯 開発背景
 
-本プロジェクトでは、コード品質を保つために
-テスト / Lint / CI（自動チェック） を導入しています。
+単なるクイズアプリではなく、
 
-<br>
+- 「なぜその答えなのか」を理解できること
+- 最後までストレスなく遊べること
 
-### フロントエンド（web）
-
-#### テスト実行（watchモード）
-
-```bash
-npm run test
-```
-
-- ファイル変更を監視して自動で再実行されます
-- 開発中のローカル確認用
-
-#### カバレッジ付きテスト（CI向け）
-
-```bash
-npm run test:cov
-```
-
-- カバレッジレポートを出力
-- GitHub Actions などの自動テスト用
-
-#### ESLint（静的解析）
-
-```bash
-npm run lint
-```
-
-- フロントエンドのコードスタイル・バグ検出
-- PR前の実行を推奨しています
+を重視し、学習体験として成立する設計を目指しました。
 
 <br>
 
-### バックエンド（API）Lint：RuboCop
+## 💡 主な機能
 
-本プロジェクトでは Ruby のコード規約チェックに RuboCop を使用します。
-
-#### ルールチェック（自動修正なし）
-
-```bash
-docker compose exec api bundle exec rubocop
-```
-
-#### 自動修正（安全な範囲のみ）
-
-```bash
-docker compose exec api bundle exec rubocop -A
-```
+- クイズ出題機能
+- 回答・正誤判定
+- フィードバック表示（解説付き）
+- 管理機能（問題の一覧・編集・削除）
 
 <br>
 
-## CI（GitHub Actions）
+## 🧠 工夫した点
 
-Pull Request および main ブランチへの push 時に、
-GitHub Actions で RuboCop を自動実行します。
+### ■ 状態遷移を意識したクイズ設計
 
-- 設定ファイル<br>
-  .github/workflows/rubocop.yml
+クイズの流れ（出題 → 回答 → 判定 → 次の問題）を明確な状態として設計し、
 
-- コード規約に違反している場合、PRはマージできません。
-
-### 推奨フロー（PR前チェック）
-
-```bash
-# フロントエンド
-npm run test
-npm run lint
-
-# バックエンド
-docker compose exec api bundle exec rubocop
-```
+ロジックの整理と拡張性を確保しました。
 
 <br>
 
-## APIテスト（RSpec）
+### ■ 学習体験の向上
 
-Rails API では、RSpec の request spec を用いて
-エンドポイントの動作確認を行います。
+単純な正誤表示ではなく、
 
-### 全テスト実行
+- なぜ正解／不正解なのか
+- 補足説明
 
-```bash
-docker compose exec api bundle exec rspec
-```
-
-### 特定のテストのみ実行
-
-```bash
-docker compose exec api bundle exec rspec spec/requests/auth_login_spec.rb
-```
-
-### トラブルシューティング
-
-#### ログインで500エラーになる場合
-
-以下を確認してください。
-
-```bash
-docker compose exec api env | grep JWT
-```
-
-JWT_SECRET が表示されない場合：
-
-1. .env がプロジェクト直下に存在するか
-2. docker-compose.yml に env_file: - .env があるか
-3. 反映のためにコンテナを作り直す：
-
-```bash
-docker compose down
-docker compose up -d --build
-```
+を表示することで、理解を深められる設計にしました。
 
 <br>
 
-## ドキュメント
+### ■ データ設計の工夫
 
-- [設計書](docs/design.md)
+問題データをコードから分離し、
+
+将来的にクイズの追加・変更がしやすい構造にしています。
+
+<br>
+
+### ■ UI/UXの最適化
+
+- 選択肢数を調整し、迷いにくい設計
+- 文言の長さを調整し、読みやすさを確保
+
+👉 「考えなくても進める」ではなく
+
+👉 「迷わず考えられる」体験を目指しました
+
+<br>
+
+## 🏆 成果
+
+- 最初から最後まで迷わず遊べるクイズ体験を実現
+- 別テーマにも応用可能な拡張性のある構造を構築
+
+<br>
+
+## 👥 開発体制
+
+- チーム開発（3人）
+- 開発期間：5日間
+
+<br>
+
+## 👤 担当
+
+- 環境構築（Docker）
+- UI設計・実装
+- API実装（一覧取得 / 編集 / 削除）
+- データベース設計・実装
+
+<br>
+
+## 🧱 技術スタック
+
+### フロントエンド
+
+- Next.js
+- TypeScript
+- Tailwind CSS
+
+### バックエンド
+
+- Ruby
+- Ruby on Rails
+
+### データベース
+
+- PostgreSQL
+
+### 認証
+
+- Firebase
+
+### インフラ / 開発環境
+
+- Docker
+
+### 開発ツール
+
+- Git / GitHub
+- ESLint
+- Prettier
+- RuboCop
+
+<br>
+
+## 🔗 リポジトリ
+
+👉 https://github.com/pom11003/SheepQ
